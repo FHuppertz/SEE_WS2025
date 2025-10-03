@@ -13,7 +13,7 @@ PUT ERROR DUE TO MEASUREING HERE
 
 \subsection{Jacobian Error Propagation}
 
-Let $\mathbf{F}$ be a vector function, defining the \textbf{end pose} of the robot, calculated from two measured positions on a 2D plane, $\mathbf{x}_1$ and $\mathbf{x}_2$. The output components are defined such that $\mathbf{F}_1$ and $\mathbf{F}_2$ represent the position coordinates and $\mathbf{F}_2$ represents the angle of the end pose. The input vectors and the functional relationship are defined in Equations \ref{eq:x1x2} to \ref{eq:F}.
+Let $\mathbf{F}$ be a vector function, defining the \textbf{end pose} of the robot, calculated from two measured positions on a 2D plane, $\mathbf{x}_1$ and $\mathbf{x}_2$. The output components are defined such that $\mathbf{F}_1$ and $\mathbf{F}_2$ represent the position coordinates and $\mathbf{F}_3$ represents the angle of the end pose. It is important to note that $\mathbf{F}_3$ can only be used if $x_{1,2} \neq x_{2,2}$, otherwise the orientation is either $\frac{\pi}{2}$ for $x_{1,1} > x_{2,1}$, or $-\frac{\pi}{2}$ for $x_{1,1} < x_{2,1}$ The input vectors and the functional relationship are defined in Equations \ref{eq:x1x2} to \ref{eq:F}.
 
 \begin{eqnarray}
 	\mathbf{x}_1 &=& \begin{pmatrix} x_{1,1} \\ x_{1,2} \end{pmatrix} \label{eq:x1x2} \\
