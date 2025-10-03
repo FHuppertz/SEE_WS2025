@@ -1,11 +1,9 @@
 import sympy as sp
-import numpy as np
 
 # 1. Define the variables as SymPy symbols
 x11, x12, x21, x22 = sp.symbols('x11 x12 x21 x22')
 
 # 2. Define the function F
-# F = arcsin((x-y) / sqrt((x-y)^2 + (z+a)^2))
 numerator = x21 - x11
 denominator = x22 - x12
 
