@@ -19,10 +19,10 @@ The definition of these input vectors and the function can be seen in Equations 
 	\mathbf{x}_1 &=& \begin{pmatrix} x_{1,1} \\ x_{1,2} \end{pmatrix} \label{eq:x1x2} \\
 	\mathbf{x}_2 &=& \begin{pmatrix} x_{2,1} \\ x_{2,2} \end{pmatrix} \\
 	\mathbf{F}(\mathbf{x}_1, \mathbf{x}_2) &=& \begin{pmatrix} \frac{1}{2}(x_{1,1} + x_{2,1}) \\
-		\frac{1}{2}(x_{1,2} + x_{2,2}) \\  \arcsin{\frac{x_{2,1}-x_{1,1}}{\sqrt{(x_{1,1}-x_{2,1})^{2}+(x_{1,2}-x_{2,2})^{2}}}}\end{pmatrix} \label{eq:F}
+		\frac{1}{2}(x_{1,2} + x_{2,2}) \\  \arctan(\frac{x_{1,1}-x_{2,1}}{x_{1,2}-x_{2,2}})\end{pmatrix} \label{eq:F}
 \end{eqnarray}
 
-To propagate the error from measuremnts of $x_1$ and $x_2$ the Jacobian matrix $\mathbf{J}$ needs to be calculated. Here, the Jacobian matrix $\mathbf{J}$ is a $2 \times 4$ matrix which can be seen in Equation \ref{eq:Jac}.
+To propagate the error from measuremnts of $x_1$ and $x_2$ the Jacobian matrix $\mathbf{J}$ needs to be calculated. Here, the Jacobian matrix $\mathbf{J}$ is a $2 \times 4$ matrix which can be seen in Equations \ref{eq:Jac} to \ref{eq:Jac_end}.
 
 \begin{eqnarray}
 	\mathbf{J} &=&
@@ -30,11 +30,13 @@ To propagate the error from measuremnts of $x_1$ and $x_2$ the Jacobian matrix $
 		\frac{\partial F_1}{\partial x_{1,1}} & \frac{\partial F_1}{\partial x_{1,2}} & \frac{\partial F_1}{\partial x_{2,1}} & \frac{\partial F_1}{\partial x_{2,2}} \\
 		\frac{\partial F_2}{\partial x_{1,1}} & \frac{\partial F_2}{\partial x_{1,2}} & \frac{\partial F_2}{\partial x_{2,1}} & \frac{\partial F_2}{\partial x_{2,2}} \\
 		\frac{\partial F_3}{\partial x_{1,1}} & \frac{\partial F_3}{\partial x_{1,2}} & \frac{\partial F_3}{\partial x_{2,1}} & \frac{\partial F_3}{\partial x_{2,2}}
-	\end{pmatrix} \\
+	\end{pmatrix} \label{eq:Jac} \\
 	&=& \begin{pmatrix}
-		\frac{1}{2} & 0           & \frac{1}{2} & 0           \\
-		0           & \frac{1}{2} & 0           & \frac{1}{2} \\
-	\end{pmatrix} \label{eq:Jac}
+		\frac{1}{2}               & 0                         & \frac{1}{2}               & 0                         \\
+		0                         & \frac{1}{2}               & 0                         & \frac{1}{2}               \\
+		\frac{x_{1,2}-x_{2,2}}{D} & \frac{x_{2,1}-x_{1,1}}{D} & \frac{x_{2,2}-x_{1,2}}{D} & \frac{x_{1,1}-x_{2,1}}{D}
+	\end{pmatrix} \\
+	D &=& (x_{1,1}-x_{2,1})^2+(x_{1,2}-x_{2,2})^2 \label{eq:Jac_end}
 \end{eqnarray}
 
 \subsection*{Error Propagation Formula}
