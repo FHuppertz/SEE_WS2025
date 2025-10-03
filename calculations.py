@@ -9,7 +9,7 @@ x22 = 10
 F = np.array([
     (x11 + x21)/2,
     (x12 + x22)/2,
-    np.arctan2((x21-x11), (x22-x12))*180/np.pi
+    np.arctan2((x21-x11), (x22-x12))
 ])
 
 d = (x11-x21)**2 + (x12 - x22)**2
@@ -29,5 +29,8 @@ C_x = np.array([
 
 C_F = J @ C_x @ J.T
 
+print("F =")
 print(F)
+print("-----------------------")
+print("C_F =")
 print(C_F)
