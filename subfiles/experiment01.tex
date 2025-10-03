@@ -12,20 +12,23 @@ PUT DESIGN IMAGES AND TEXT HERE AND HOW TO MEASURE POSE AND ENSURE START POSITIO
 PUT ERROR DUE TO MEASUREING HERE
 
 \subsection{Jacobian Error Propagation}
-Let $F$ be a vector function to calculate the end pose using two measured positions, $\mathbf{x}_1$ and $\mathbf{x}_2$.
-The definition of these input vectors and the function can be seen in Equations \ref{eq:x1x2} to \ref{eq:F}.
+
+Let $\mathbf{F}$ be a vector function, defining the \textbf{end pose} of the robot, calculated from two measured positions on a 2D plane, $\mathbf{x}_1$ and $\mathbf{x}_2$. The output components are defined such that $\mathbf{F}_1$ and $\mathbf{F}_2$ represent the position coordinates and $\mathbf{F}_2$ represents the angle of the end pose. The input vectors and the functional relationship are defined in Equations \ref{eq:x1x2} to \ref{eq:F}.
 
 \begin{eqnarray}
 	\mathbf{x}_1 &=& \begin{pmatrix} x_{1,1} \\ x_{1,2} \end{pmatrix} \label{eq:x1x2} \\
 	\mathbf{x}_2 &=& \begin{pmatrix} x_{2,1} \\ x_{2,2} \end{pmatrix} \\
-	\mathbf{F}(\mathbf{x}_1, \mathbf{x}_2) &=& \begin{pmatrix} \frac{1}{2}(x_{1,1} + x_{2,1}) \\
-		\frac{1}{2}(x_{1,2} + x_{2,2}) \\  \arctan(\frac{x_{1,1}-x_{2,1}}{x_{1,2}-x_{2,2}})\end{pmatrix} \label{eq:F}
+	\mathbf{F}(\mathbf{x}_1, \mathbf{x}_2) &=& \begin{pmatrix}
+		\frac{1}{2}(x_{1,1} + x_{2,1}) \\
+		\frac{1}{2}(x_{1,2} + x_{2,2}) \\
+		\arctan\left(\frac{x_{1,1}-x_{2,1}}{x_{1,2}-x_{2,2}}\right)
+	\end{pmatrix} \label{eq:F}
 \end{eqnarray}
 
-To propagate the error from measuremnts of $x_1$ and $x_2$ the Jacobian matrix $\mathbf{J}$ needs to be calculated. Here, the Jacobian matrix $\mathbf{J}$ is a $2 \times 4$ matrix which can be seen in Equations \ref{eq:Jac} to \ref{eq:Jac_end}.
+The propagation of uncertainty in the measured input coordinates requires the calculation of the \textbf{Jacobian matrix} $\mathbf{J}$. The total input vector $\mathbf{x} = (x_{1,1}, x_{1,2}, x_{2,1}, x_{2,2})^T$ is composed of all four scalar variables. Since $\mathbf{F}$ is a vector-valued function with three outputs and four inputs, the resulting Jacobian matrix $\mathbf{J}$ is a $3 \times 4$ matrix, presented in Equations \ref{eq:Jac} to \ref{eq:Jac_end}.
 
 \begin{eqnarray}
-	\mathbf{J} &=&
+	\mathbf{J} &=& \frac{\partial \mathbf{F}}{\partial \mathbf{x}} =
 	\begin{pmatrix}
 		\frac{\partial F_1}{\partial x_{1,1}} & \frac{\partial F_1}{\partial x_{1,2}} & \frac{\partial F_1}{\partial x_{2,1}} & \frac{\partial F_1}{\partial x_{2,2}} \\
 		\frac{\partial F_2}{\partial x_{1,1}} & \frac{\partial F_2}{\partial x_{1,2}} & \frac{\partial F_2}{\partial x_{2,1}} & \frac{\partial F_2}{\partial x_{2,2}} \\
@@ -34,22 +37,19 @@ To propagate the error from measuremnts of $x_1$ and $x_2$ the Jacobian matrix $
 	&=& \begin{pmatrix}
 		\frac{1}{2}               & 0                         & \frac{1}{2}               & 0                         \\
 		0                         & \frac{1}{2}               & 0                         & \frac{1}{2}               \\
-		\frac{x_{1,2}-x_{2,2}}{D} & \frac{x_{2,1}-x_{1,1}}{D} & \frac{x_{2,2}-x_{1,2}}{D} & \frac{x_{1,1}-x_{2,1}}{D}
+		\frac{x_{1,2}-x_{2,2}}{d} & \frac{x_{2,1}-x_{1,1}}{d} & \frac{x_{2,2}-x_{1,2}}{d} & \frac{x_{1,1}-x_{2,1}}{d}
 	\end{pmatrix} \\
-	D &=& (x_{1,1}-x_{2,1})^2+(x_{1,2}-x_{2,2})^2 \label{eq:Jac_end}
+	d &=& (x_{1,1}-x_{2,1})^2+(x_{1,2}-x_{2,2})^2 \label{eq:Jac_end}
 \end{eqnarray}
 
-\subsection*{Error Propagation Formula}
-The covariance matrix of the result $\mathbf{C}_F$ is related to the covariance matrix of the inputs $\mathbf{C}_x$ by the formula:
+The \textbf{covariance matrix of the calculated end pose}, $\mathbf{C}_F$, is then determined from the input covariance matrix, $\mathbf{C}_x$, via the generalized error propagation formula, which can be seen in Equation \ref{eq:CF}.
 
-$$
-	\mathbf{C}_F = \mathbf{J} \, \mathbf{C}_x \, \mathbf{J}^T
-$$
+\begin{equation}
+	\mathbf{C}_F = \mathbf{J} \, \mathbf{C}_x \, \mathbf{J}^T \label{eq:CF}
+\end{equation}
+where $\mathbf{C}_x$ is the $4 \times 4$ covariance matrix of the input variables $(x_{1,1}, x_{1,2}, x_{2,1}, x_{2,2})$.
 
-where $\mathbf{C}_x$ is the $4 \times 4$ covariance matrix for the input vector $\mathbf{x} = (x_{1,1}, x_{1,2}, x_{2,1}, x_{2,2})^T$.
-\begin{itemize}
-	\item The diagonal elements of $\mathbf{C}_F$ give the **variances** of $F_1$ and $F_2$: $\mathbf{C}_F(i, i) = \sigma_{F_i}^2$.
-	\item The off-diagonal elements of $\mathbf{C}_F$ give the **covariances** between $F_1$ and $F_2$.
-\end{itemize}
+
+
 
 \end{document}
