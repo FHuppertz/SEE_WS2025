@@ -1,0 +1,23 @@
+The propagation of uncertainty in the measured input coordinates requires the calculation of the \textbf{Jacobian matrix} $\mathbf{J}$. The total input vector $\mathbf{x} = (x_{1,1}, x_{1,2}, x_{2,1}, x_{2,2})^T$ is composed of all four scalar variables. Since $\mathbf{F}$ is a vector-valued function with three outputs and four inputs, the resulting Jacobian matrix $\mathbf{J}$ is a $3 \times 4$ matrix, presented in Equations \ref{eq:Jac} to \ref{eq:Jac_end}.
+
+\begin{eqnarray}
+	\mathbf{J} &=& \frac{\partial \mathbf{F}}{\partial \mathbf{x}} =
+	\begin{pmatrix}
+		\frac{\partial F_1}{\partial x_{1,1}} & \frac{\partial F_1}{\partial x_{1,2}} & \frac{\partial F_1}{\partial x_{2,1}} & \frac{\partial F_1}{\partial x_{2,2}} \\
+		\frac{\partial F_2}{\partial x_{1,1}} & \frac{\partial F_2}{\partial x_{1,2}} & \frac{\partial F_2}{\partial x_{2,1}} & \frac{\partial F_2}{\partial x_{2,2}} \\
+		\frac{\partial F_3}{\partial x_{1,1}} & \frac{\partial F_3}{\partial x_{1,2}} & \frac{\partial F_3}{\partial x_{2,1}} & \frac{\partial F_3}{\partial x_{2,2}}
+	\end{pmatrix} \label{eq:Jac} \\
+	&=& \begin{pmatrix}
+		\frac{1}{2}               & 0                         & \frac{1}{2}               & 0                         \\
+		0                         & \frac{1}{2}               & 0                         & \frac{1}{2}               \\
+		\frac{x_{1,2}-x_{2,2}}{d} & \frac{x_{2,1}-x_{1,1}}{d} & \frac{x_{2,2}-x_{1,2}}{d} & \frac{x_{1,1}-x_{2,1}}{d}
+	\end{pmatrix} \\
+	d &=& (x_{1,1}-x_{2,1})^2+(x_{1,2}-x_{2,2})^2 \label{eq:Jac_end}
+\end{eqnarray}
+
+The \textbf{covariance matrix of the calculated end pose}, $\mathbf{C}_F$, is then determined from the input covariance matrix, $\mathbf{C}_x$, via the generalized error propagation formula, which can be seen in Equation \ref{eq:CF}.
+
+\begin{equation}
+	\mathbf{C}_F = \mathbf{J} \, \mathbf{C}_x \, \mathbf{J}^T \label{eq:CF}
+\end{equation}
+where $\mathbf{C}_x$ is the $4 \times 4$ covariance matrix of the input variables $(x_{1,1}, x_{1,2}, x_{2,1}, x_{2,2})$.

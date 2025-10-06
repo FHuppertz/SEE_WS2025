@@ -1,0 +1,48 @@
+Let $\mathbf{F}$ be a vector function, defining the \textbf{end pose} of the robot, calculated from two measured positions on a 2D plane, $\mathbf{x}_1$ and $\mathbf{x}_2$. The output components are defined such that $\mathbf{F}_1$ and $\mathbf{F}_2$ represent the position coordinates and $\mathbf{F}_3$ represents the angle of the end pose. It is important to note that $\mathbf{F}_3$ can only be used if $x_{1,2} \neq x_{2,2}$, otherwise the orientation is either $\frac{\pi}{2}$ for $x_{1,1} > x_{2,1}$, or $-\frac{\pi}{2}$ for $x_{1,1} < x_{2,1}$ The input vectors and the functional relationship are defined in Equations \ref{eq:x1x2} to \ref{eq:F}.
+
+\begin{eqnarray}
+	\mathbf{x}_1 &=& \begin{pmatrix} x_{1,1} \\ x_{1,2} \end{pmatrix} \label{eq:x1x2} \\
+	\mathbf{x}_2 &=& \begin{pmatrix} x_{2,1} \\ x_{2,2} \end{pmatrix} \\
+	\mathbf{F}(\mathbf{x}_1, \mathbf{x}_2) &=& \begin{pmatrix}
+		\frac{1}{2}(x_{1,1} + x_{2,1}) \\
+		\frac{1}{2}(x_{1,2} + x_{2,2}) \\
+		\arctan\left(\frac{x_{2,1}-x_{1,1}}{x_{2,2}-x_{2,1}}\right)
+	\end{pmatrix} \label{eq:F}
+\end{eqnarray}
+
+As the proposed measurement mechanism utilizes two points on a 2D plane marked by pens, there exists erros in the measured coordinates of these points.
+These errors are represented by a $4 \times 4$ covariance matrix $\mathbf{C_x}$, which can be seen in Equaiton \ref{eq:Cx}.
+
+\begin{equation}
+\mathbf{C_x} = 
+\begin{pmatrix}
+\sigma_{x_{1,1}}^2 & 0 & 0 & 0 \\
+0 & \sigma_{x_{1,2}}^2 & 0 & 0 \\
+0 & 0 & \sigma_{x_{2,1}}^2 & 0 \\
+0 & 0 & 0 & \sigma_{x_{2,2}}^2 \\
+\end{pmatrix} \label{eq:Cx}
+\end{equation}
+
+We assume that the uncertainty of each coordinate is uncorrelated. Therefore, $\mathbf{C_x}$ is a diagonal matrix. 
+The individual uncertainties $\sigma_{x_{1,1}}$ to $\sigma_{x_{2,2}}$ are estimated in Table \ref{tab:uncert}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Estimated Uncertainties for the Covariance Matrix ($\mathbf{C_x}$)}
+    \label{tab:uncert}
+    \begin{tabular}{|c|c|} % FIX: Changed to 3 columns to match the content
+        \hline
+        \textbf{Parameter} & \textbf{Standard Deviation ($\sigma$)}\\
+        \hline
+        $x_{1,1}$ & $2.0 \text{ mm}$ \\
+        \hline
+        $x_{1,2}$ & $2.0 \text{ mm}$ \\
+        \hline
+        $x_{2,1}$ & $2.0 \text{ mm}$ \\
+        \hline
+        $x_{2,2}$ & $2.0 \text{ mm}$ \\
+        \hline
+    \end{tabular}
+\end{table}
+
+These estimates in Table \ref{tab:uncert} are based on ....... HERE NOW
