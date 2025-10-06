@@ -15,9 +15,9 @@ The propagation of uncertainty in the measured input coordinates requires the ca
 	d &=& (x_{1,1}-x_{2,1})^2+(x_{1,2}-x_{2,2})^2 \label{eq:Jac_end}
 \end{eqnarray}
 
-The \textbf{covariance matrix of the calculated end pose}, $\mathbf{C}_F$, is then determined from the input covariance matrix, $\mathbf{C}_x$, via the generalized error propagation formula, which can be seen in Equation \ref{eq:CF}.
+The \textbf{covariance matrix of the calculated end pose} $\mathbf{C}_F$ is then determined from the input covariance matrix $\mathbf{C}_x$ via the generalized error propagation formula, which can be seen in Equation \ref{eq:CF}
 
 \begin{equation}
-	\mathbf{C}_F = \mathbf{J} \, \mathbf{C}_x \, \mathbf{J}^T \label{eq:CF}
+	\mathbf{C}_F = \mathbf{J} \, \mathbf{C}_x \, \mathbf{J}^T, \label{eq:CF}
 \end{equation}
 where $\mathbf{C}_x$ is the $4 \times 4$ covariance matrix of the input variables $(x_{1,1}, x_{1,2}, x_{2,1}, x_{2,2})$.

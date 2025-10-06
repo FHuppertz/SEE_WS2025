@@ -1,98 +1,89 @@
-The goal of this experiment is to design a differntial drive robot using LEGO EV3 and then measure its pose variation for three different constant velocity motions: an arc to the left, straight line ahead, and an arc to the right.
-\subsection{Design of Experiment}
-
 A differential drive robot is a mobile robot that moves using two independently driven wheels mounted on either side of its chassis. By varying the relative speed and direction of these wheels, the robot can move forward, backward, or rotate in place, making it highly maneuverable. This design is simple, cost-effective, and widely used in research and industry for tasks such as navigation, mapping, and control experiments.
 
 % --- FIGURE 1: Four Subfigures ---
 \begin{figure}[ht]
-    \centering
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figures/robot_angles/top.png}
-        \caption{Top view}
-        \label{fig:top_view}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figures/robot_angles/side.png}
-        \caption{Side view}
-        \label{fig:side_view}
-    \end{subfigure}
+	\centering
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/robot_angles/top.png}
+		\caption{Top view}
+		\label{fig:top_view}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/robot_angles/side.png}
+		\caption{Side view}
+		\label{fig:side_view}
+	\end{subfigure}
 
-    \vspace{1em} % Add some vertical space between rows
+	\vspace{1em} % Add some vertical space between rows
 
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figures/robot_angles/front.png}
-        \caption{Front view}
-        \label{fig:front_view}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figures/robot_angles/isometric.png}
-        \caption{Isometric view}
-        \label{fig:isometric_view}
-    \end{subfigure}
-    \caption{Various orthographic and isometric views of the differential drive robot. The top, side, front, and isometric views (\subref{fig:top_view} to \subref{fig:isometric_view}) detail the chassis, wheel placement, and central control unit.}
-    \label{fig:robot_views_1}
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/robot_angles/front.png}
+		\caption{Front view}
+		\label{fig:front_view}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/robot_angles/isometric.png}
+		\caption{Isometric view}
+		\label{fig:isometric_view}
+	\end{subfigure}
+	\caption{Various orthographic and isometric views of the differential drive robot. The top, side, front, and isometric views (\subref{fig:top_view} to \subref{fig:isometric_view}) detail the chassis, wheel placement, and central control unit.}
+	\label{fig:robot_views_1}
 \end{figure}
 
 \begin{figure}[ht]
-    \centering
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figures/robot_angles/isometric2.png}
-        \caption{Second isometric view}
-        \label{fig:isometric2_view}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figures/robot_angles/bottom.png}
-        \caption{Bottom view}
-        \label{fig:bottom_view}
-    \end{subfigure}
+	\centering
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/robot_angles/isometric2.png}
+		\caption{Second isometric view}
+		\label{fig:isometric2_view}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/robot_angles/bottom.png}
+		\caption{Bottom view}
+		\label{fig:bottom_view}
+	\end{subfigure}
 
-    \vspace{1em} % Add some vertical space between rows
+	\vspace{1em} % Add some vertical space between rows
 
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figures/robot_angles/bottom_iso.png}
-        \caption{Bottom-isometric view}
-        \label{fig:bottom_iso_view}
-    \end{subfigure}
-    \caption{Additional views of the robot focusing on the undercarriage. The second isometric, bottom, and bottom-isometric views (\subref{fig:isometric2_view} to \subref{fig:bottom_iso_view}) illustrate the passive caster wheel and pen placement mechanism.}
-    \label{fig:robot_views_2}
-    \hfill
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/robot_angles/bottom_iso.png}
+		\caption{Bottom-isometric view}
+		\label{fig:bottom_iso_view}
+	\end{subfigure}
+	\caption{Additional views of the robot focusing on the undercarriage. The second isometric, bottom, and bottom-isometric views (\subref{fig:isometric2_view} to \subref{fig:bottom_iso_view}) illustrate the passive caster wheel and pen placement mechanism.}
+	\label{fig:robot_views_2}
+	\hfill
 \end{figure}
 
-The linear and angular velocities of a differential drive robot are given by:
+The linear and angular velocities of a differential drive robot are given by Equations \ref{eq:linear_velocity} and \ref{eq:angular_velocity}
 
-\begin{equation}
-v = \frac{r}{2} \left( \omega_r + \omega_l \right)
-\label{eq:linear_velocity}
-\end{equation}
+\begin{eqnarray}
+	v &=& \frac{r}{2} \left( \omega_r + \omega_l \right)
+	\label{eq:linear_velocity} \\
+	\omega &=& \frac{r}{L} \left( \omega_r - \omega_l \right),
+	\label{eq:angular_velocity}
+\end{eqnarray}
 
-\begin{equation}
-\omega = \frac{r}{L} \left( \omega_r - \omega_l \right)
-\label{eq:angular_velocity}
-\end{equation}
-
-where $v$ is the linear velocity, $\omega$ the angular velocity, $r$ the wheel radius, 
-$L$ the distance between the wheels, and $\omega_r$, $\omega_l$ the angular velocities 
+where $v$ is the linear velocity, $\omega$ the angular velocity, $r$ the wheel radius,
+$L$ the distance between the wheels, and $\omega_r$, $\omega_l$ the angular velocities
 of the right and left wheels, respectively.
 
-The figures in this section showcase various views of the robot that this team built (see Figure \ref{fig:robot_views_1} and Figure \ref{fig:robot_views_2}). The construction and architecture of the robot is done in a way that the control unit comprises the middle part of the body. Since it is the most massive component of the robot, the control unit in the center, the center of gravity of the robot stays in approximately the middle of its body, which allows it to be stable. The two active wheels on both sides, along with the caster wheel (best seen in Figure \ref{fig:robot_views_2}, specifically subfigure \ref{fig:bottom_view}), are placed while keeping the typical design of a differential drive robot in mind.
-The angles chosen for the views of the robot are such that each every detail of the robot's external body can be seen (e.g., the front view in Figure \ref{fig:robot_views_1}, subfigure \ref{fig:front_view}).
-In order to take measurements, the main components used were a pen holder, a pen, and a so-called 'wall aligner'. 
-When the robot would move, the front and back pens would have their tips touching and dragging along a surface such as a cardboard terrain.
-This would mark its trajectory using a combination of points and curved lines. Since the requirement of this assignment is
-to determine the pose of the robot, the two points formed from the pen tips making two blobs on the surface can allow for a straight line to be drawn connecting them. The centre point of the line, which can be calculated, can then serve as the position of the robot with its $x$ and $y$ axis. 
-The orientation with respect to the horizontal or $x$ axis of the line can represent the desired orientation of the robot. 
+Figure \ref{fig:robot_views_1} and Figure \ref{fig:robot_views_2} showcase various views of the robot that this team built. The construction and architecture of the robot is done in a way that the control unit comprises the middle part of the body. Since it is the most massive component of the robot, the control unit in the center, the center of gravity of the robot stays in approximately the middle of its body, which allows it to be stable. The two active wheels on both sides, along with the caster wheel, can be seen in Figure \ref{fig:robot_views_2}, specifically subfigure \ref{fig:bottom_view}.
+In order to take measurements, the main components used were a pen holder, a pen, and a so-called 'wall aligner'.
+When the robot would move, one of the pens would have their tip touching and dragging along a surface, such as a cardboard terrain, which would mark its trajectory as a curved line. Since the requirement of this assignment is
+to determine the end pose of the robot two points marked by the pens would be used to calculate the position of the robot as well as its orientation.
 The pen holder is a circular piece we found in the lego kit with a hole in the middle that became suitable for its designated purpose.
 
 In order to ensure that the robot always starts from approximately the same pose in every trial of the experiment,
-the robot has a supposedly flat, long lego piece placed in a way such that its length is along a perpendicular axis to that of the rolling motion of the robot.
-The way this wall aligner works is by placing the robot in a corner of a room such that the wall aligner's flat surface completely pushes against the nearby wall surface in a way that there are no gaps between the wall aligner and the corresponding wall \cite{referenceexample}.
+the robot has a supposedly flat, long lego piece placed at the back of the robot.
+This wall aligner works by placing the robot in such a way that the wall aligner's flat surface completely pushes against it, eliminating a degree of freedom in the start position. Then the wheels will be placed between two prior marked lines.
