@@ -45,4 +45,52 @@ The individual uncertainties $\sigma_{x_{1,1}}$ to $\sigma_{x_{2,2}}$ are estima
     \end{tabular}
 \end{table}
 
-These estimates in Table \ref{tab:uncert} are based on ....... HERE NOW
+These estimates in Table \ref{tab:uncert} are based on 
+\subsection*{Major sources of Error which contributes the most to the $\sim$2.0 mm uncertainty}
+\begin{enumerate}
+    \item \textbf{Wheel Slippage and Friction}  \\
+    This is almost certainly the \textbf{largest source of error}. The robot's wheels can slip, especially during acceleration and deceleration.
+    \begin{itemize}
+        \item \textit{How it causes error:} One wheel might slip more than the other, causing the robot to turn slightly when it should go straight. The amount of slip is unpredictable and changes with tiny variations on the paper surface or dust on the wheels. This directly impacts the robot's final position and orientation, causing significant random variations between trials.
+    \end{itemize}
+    
+    \item \textbf{Pen Wiggle and Holder Flex}  \\
+    The mechanism holding your pens isn't perfectly rigid.
+    \begin{itemize}
+        \item \textit{How it causes error:} The pens can wobble or shift in their holders as the robot moves and stops. The front pen, in particular, is held by long, flexible beams that can bend. This mechanical "slop" means the pen tip isn't always in the exact same spot relative to the robot's chassis, leading to inconsistent mark placement. This can easily add a millimeter or more of random error.
+    \end{itemize}
+
+    \item \textbf{Marking Error from 3mm Dot} \\
+    The tip of the pen is not an infinitely small point; it's a ball that creates a dot.
+    \begin{itemize}
+        \item \textit{How it causes error:} This large diameter makes it extremely difficult to accurately and consistently estimate the true center of the dot when taking measurements. Instead of being a minor issue, this visual ambiguity becomes one of the most significant sources of measurement error in the experiment. This estimation challenge alone can be expected to contribute a standard deviation of approximately 0.75 mm to each coordinate measurement.
+    \end{itemize}
+\end{enumerate}
+
+\subsection*{Minor Sources of Error (Contributing fractions of a millimeter)}
+\begin{enumerate}
+    \setcounter{enumi}{3} % Continue numbering from the previous list
+    \item \textbf{Caster Wheel (``Bob Wheel'') Dynamics} \\
+    The front "bob wheel" (a caster or ball wheel) is a third point of contact that can introduce unpredictable movement.
+    \begin{itemize}
+        \item \textit{How it causes error:} The caster wheel has its own friction and can sometimes stick or swivel in a non-ideal way. If it doesn't align perfectly with the direction of travel, it can introduce a slight, random steering force, causing the robot to veer off its intended path.
+    \end{itemize}
+
+    \item \textbf{Parallax Error in Measurement} \\
+    This is a human error that occurs when reading a measurement from a ruler or scale.
+    \begin{itemize}
+        \item \textit{How it causes error:} If your eye is not positioned directly perpendicular to the measurement mark on the ruler, the reading will appear shifted. This can lead to inconsistent coordinate readings when you measure the pen dots on the paper.
+        % For a real document, you would uncomment the line below and have an image file.
+        % \includegraphics[width=0.6\textwidth]{parallax_error_diagram.png}
+    \end{itemize}
+\end{enumerate}
+
+\subsection*{Negligible Sources of Error (Likely insignificant for this experiment)}
+\begin{enumerate}
+    \setcounter{enumi}{5} % Continue numbering
+    \item \textbf{LEGO Brick Manufacturing Tolerances}  \\
+    LEGO parts are manufactured with extremely high precision (tolerances are often cited as being around $10-20 \, \mu\text{m}$, or $0.01-0.02 \, \text{mm}$).
+    \begin{itemize}
+        \item \textit{How it causes error:} Tiny variations in the size of bricks and axles mean the robot's wheelbase or the distance between the pens might be fractionally different from the design value. However, this error is systematic and incredibly small compared to the other factors, making it negligible in the context of a 2.0 mm overall uncertainty.
+    \end{itemize}
+\end{enumerate}
