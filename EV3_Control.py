@@ -1,5 +1,3 @@
-#!/usr/bin/env micropython
-
 from time import sleep
 import sys
 import math 
@@ -8,10 +6,9 @@ from ev3dev2.sensor import INPUT_1, INPUT_2, INPUT_3, INPUT_4
 from ev3dev2.sound import Sound
 from ev3dev2.button import Button
 
-from datetime import datetime
 
 WHEEL_DIAMETER = 5.6 # cm
-MAIN_AXIS_LENGTH = 9.5 # cms
+MAIN_AXIS_LENGTH = (14.6 + 9.1)/2 # cms
 
 buttons = Button()
 move = MoveTank(OUTPUT_A, OUTPUT_D)
@@ -35,13 +32,13 @@ distance_traveled_wheel_2 = 0.0 # in cm
 spkr.speak('Press a button')
 while True:
     if buttons.left:
-        move.on_for_seconds(SpeedPercent(30), SpeedPercent(40), 2.2, block=False)
+        move.on_for_seconds(SpeedPercent(-30), SpeedPercent(-40), 2.2, block=False)
 
     elif buttons.up:
-        move.on_for_seconds(SpeedPercent(40), SpeedPercent(40), 2.2, block=False)
+        move.on_for_seconds(SpeedPercent(-40), SpeedPercent(-40), 2.2, block=False)
 
     elif buttons.right:
-        move.on_for_seconds(SpeedPercent(40), SpeedPercent(30), 2.2, block=False)
+        move.on_for_seconds(SpeedPercent(-40), SpeedPercent(-30), 2.2, block=False)
 
     if (motor_1.is_running): motor_1_path.append((motor_1.position * math.pi) / 180.0)
     if (motor_2.is_running): motor_2_path.append((motor_2.position * math.pi) / 180.0)
@@ -49,11 +46,11 @@ while True:
     if (motor_1.is_holding and motor_2.is_holding):
         data_length = min(len(motor_1_path), len(motor_2_path))
 
-        with open(f'both_motors_path_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv', "w") as f_wheels_path:
+        with open("both_motors_path.csv", "a") as f_wheels_path:
             for i in range(data_length):
                 f_wheels_path.write(str(str(motor_1_path[i]) + " " + str(motor_2_path[i]) + "\n")) # in rad
 
-        with open(f"robot_path_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv", "w") as f_robot_path:
+        with open("robot_path.csv", "a") as f_robot_path:
 
             for i in range(data_length):
                 if i is 0:
