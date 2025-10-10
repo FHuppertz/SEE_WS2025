@@ -8,8 +8,10 @@ from ev3dev2.sensor import INPUT_1, INPUT_2, INPUT_3, INPUT_4
 from ev3dev2.sound import Sound
 from ev3dev2.button import Button
 
+from datetime import datetime
+
 WHEEL_DIAMETER = 5.6 # cm
-MAIN_AXIS_LENGTH = 12.0 # cm
+MAIN_AXIS_LENGTH = 9.5 # cms
 
 buttons = Button()
 move = MoveTank(OUTPUT_A, OUTPUT_D)
@@ -47,11 +49,12 @@ while True:
     if (motor_1.is_holding and motor_2.is_holding):
         data_length = min(len(motor_1_path), len(motor_2_path))
 
-        with open('both_motors_path.csv', "w") as f_wheels_path:
+        with open(f'both_motors_path_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv', "w") as f_wheels_path:
             for i in range(data_length):
                 f_wheels_path.write(str(str(motor_1_path[i]) + " " + str(motor_2_path[i]) + "\n")) # in rad
 
-        with open('robot_path.csv', "w") as f_robot_path:
+        with open(f"robot_path_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv", "w") as f_robot_path:
+
             for i in range(data_length):
                 if i is 0:
                     distance_traveled_wheel_1 = (WHEEL_DIAMETER * math.pi * motor_1_path[0]) / (2 * math.pi)
