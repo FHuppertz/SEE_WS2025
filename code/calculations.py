@@ -50,5 +50,5 @@ cbar.set_label('Angle (Radians)')
 
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend()
-plt.savefig('robot_path_x_vs_y_scatter_plot.png')
+plt.savefig('figures/robot_path_x_vs_y_scatter_plot.png')
 plt.close()
