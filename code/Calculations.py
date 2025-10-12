@@ -33,7 +33,7 @@ encoder_df['X'] = -encoder_df['X']
 encoder_df['Y'] = -encoder_df['Y']
 encoder_df['Angle'] = -encoder_df['Angle'] + np.pi/2
 
-print(encoder_df['Angle'])
+#print(encoder_df['Angle'])
 
 manual_df.columns = ['Lx', 'Ly', 'Rx', 'Ry']
 
@@ -42,17 +42,45 @@ manual_df[['X', 'Y', 'Angle']] = manual_df.apply(End_Pose, axis=1, result_type='
 # Plot the first column (X) against the second column (Y)
 plt.figure(figsize=(10, 6))
 
-# Plotting X vs Y, using the 'Angle' column to color-code the points for extra insight
-plt.scatter(encoder_df['Y'], encoder_df['X'], label='Encoder Data', s=0.1, c=encoder_df['Angle'], cmap='plasma')
-plt.scatter(manual_df['Y'], manual_df['X'], label='Manual Data', marker='x', s=20, c=manual_df['Angle'], cmap='plasma')
+min_angle_encoder_df = encoder_df['Angle'].min()
+max_angle_encoder_df = encoder_df['Angle'].max()
+
+min_angle_manual_df = manual_df['Angle'].min()
+max_angle_manual_df = manual_df['Angle'].max()
+
+max_angle = max(max_angle_encoder_df, max_angle_manual_df)
+min_angle = max(min_angle_encoder_df, min_angle_manual_df)
+
+encoder_scatter = plt.scatter(
+    encoder_df['Y'],
+    encoder_df['X'],
+    label='Encoder Data',
+    s=0.1,
+    c=encoder_df['Angle'],
+    cmap='plasma',
+    vmin=float(min_angle),
+    vmax=float(max_angle)
+)
+
+manual_scatter = plt.scatter(
+    manual_df['Y'],
+    manual_df['X'],
+    label='Manual Data',
+    marker='x',
+    s=20,
+    c=manual_df['Angle'],
+    cmap='plasma',
+    vmin=float(min_angle),
+    vmax=float(max_angle)
+)
 
 plt.title('Robot pose and path')
 plt.xlabel('Y (cm)')
 plt.ylabel('X (cm)')
 
-# Add a color bar
-cbar = plt.colorbar()
-cbar.set_label('Angle (Radians)')
+cbar = plt.colorbar(manual_scatter)
+cbar.set_label('Angle (Radians)', rotation=270, labelpad=15)
+cbar.set_ticks(list(np.linspace(min_angle, max_angle, 15)))
 
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend()
