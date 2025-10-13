@@ -7,18 +7,16 @@ from Functions import End_Pose, Cov
 
 encoder_file_path = './data/robot_path.csv'
 manual_file_path = './data/manual_measurements.csv'
+manual_file_path2 = './data/rahul_measurements.csv'
+manual_file_path3 = './data/bhavesh_measurements.csv'
 
 try:
     encoder_df = pd.read_csv(encoder_file_path, sep=r'\s+', header=None)
-except FileNotFoundError:
-    print(f"Error: The encoder file was not found at the expected path: {encoder_file_path}. Please double-check the path.")
-    # Exiting the function if the file cannot be loaded
-    exit()
-
-try:
     manual_df = pd.read_csv(manual_file_path, header=None)
+    manual_df2 = pd.read_csv(manual_file_path2, header=None)
+    manual_df3 = pd.read_csv(manual_file_path3)
 except FileNotFoundError:
-    print(f"Error: The manual file was not found at the expected path: {manual_file_path}. Please double-check the path.")
+    print(f"Error: File was not found. Please double-check the path.")
     # Exiting the function if the file cannot be loaded
     exit()
 
@@ -32,21 +30,33 @@ encoder_df['Angle'] = -encoder_df['Angle'] + np.pi/2
 #print(encoder_df['Angle'])
 
 manual_df.columns = ['Lx', 'Ly', 'Rx', 'Ry']
-
 manual_df[['X', 'Y', 'Angle']] = manual_df.apply(End_Pose, axis=1, result_type='expand')
 
+manual_df2.columns = ['Lx', 'Ly', 'Rx', 'Ry']
+manual_df2['Lx'] -= 6.9
+manual_df2['Ly'] += 4.75
+manual_df2['Rx'] -= 6.9
+manual_df2['Ry'] += 4.75
+manual_df2[['X', 'Y', 'Angle']] = manual_df2.apply(End_Pose, axis=1, result_type='expand')
+
+manual_df3['Theta'] *= np.pi/180
 
 # Plot the results
 plt.figure(figsize=(10, 6))
 
-min_angle_encoder_df = encoder_df['Angle'].min()
-max_angle_encoder_df = encoder_df['Angle'].max()
+angles = [
+    encoder_df['Angle'].min(),
+    encoder_df['Angle'].max(),
+    manual_df['Angle'].min(),
+    manual_df['Angle'].max(),
+    manual_df2['Angle'].min(),
+    manual_df2['Angle'].max(),
+    manual_df3['Theta'].min(),
+    manual_df3['Theta'].max(),
+]
 
-min_angle_manual_df = manual_df['Angle'].min()
-max_angle_manual_df = manual_df['Angle'].max()
-
-max_angle = max(max_angle_encoder_df, max_angle_manual_df)
-min_angle = max(min_angle_encoder_df, min_angle_manual_df)
+max_angle = max(angles)
+min_angle = min(angles)
 
 encoder_scatter = plt.scatter(
     encoder_df['Y'],
@@ -65,7 +75,34 @@ manual_scatter = plt.scatter(
     label='Manual Data',
     marker='x',
     s=20,
+    alpha=0.5,
     c=manual_df['Angle'],
+    cmap='plasma',
+    vmin=float(min_angle),
+    vmax=float(max_angle)
+)
+
+manual_scatter2 = plt.scatter(
+    manual_df2['Y'],
+    manual_df2['X'],
+    label='Manual Data 2',
+    marker='s',
+    s=20,
+    alpha=0.5,
+    c=manual_df2['Angle'],
+    cmap='plasma',
+    vmin=float(min_angle),
+    vmax=float(max_angle)
+)
+
+manual_scatter3 = plt.scatter(
+    manual_df3['Y'],
+    manual_df3['X'],
+    label='Manual Data 2',
+    marker='^',
+    s=20,
+    alpha=0.5,
+    c=manual_df3['Theta'],
     cmap='plasma',
     vmin=float(min_angle),
     vmax=float(max_angle)
