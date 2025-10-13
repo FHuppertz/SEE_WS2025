@@ -5,11 +5,9 @@ import matplotlib.pyplot as plt
 from Functions import End_Pose, Cov
 
 
-# Using the file path provided by you
 encoder_file_path = './data/robot_path.csv'
 manual_file_path = './data/manual_measurements.csv'
 
-# Read the data, assuming it's space-separated and has no header.
 try:
     encoder_df = pd.read_csv(encoder_file_path, sep=r'\s+', header=None)
 except FileNotFoundError:
@@ -17,8 +15,6 @@ except FileNotFoundError:
     # Exiting the function if the file cannot be loaded
     exit()
 
-
-# Read the data, assuming it's space-separated and has no header.
 try:
     manual_df = pd.read_csv(manual_file_path, header=None)
 except FileNotFoundError:
@@ -39,7 +35,8 @@ manual_df.columns = ['Lx', 'Ly', 'Rx', 'Ry']
 
 manual_df[['X', 'Y', 'Angle']] = manual_df.apply(End_Pose, axis=1, result_type='expand')
 
-# Plot the first column (X) against the second column (Y)
+
+# Plot the results
 plt.figure(figsize=(10, 6))
 
 min_angle_encoder_df = encoder_df['Angle'].min()
@@ -84,7 +81,7 @@ cbar.set_ticks(list(np.linspace(min_angle, max_angle, 15)))
 
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend()
-plt.savefig('figures/pose_scatter_plot.png')
+plt.savefig('figures/pose_scatter_plot.png', dpi=500)
 plt.close()
 
 print('Finished plotting')

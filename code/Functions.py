@@ -32,7 +32,7 @@ def End_Pose(data):
     variables = [Lx, Ly, Rx, Ry, A, T]
     F_callable = sp.lambdify(variables, F_Mat(), "numpy")
 
-    end_pose = F_callable(data['Lx'], data['Ly'], data['Rx'], data['Ry'], 5.0, 4.75).flatten()
+    end_pose = F_callable(data['Lx'], data['Ly'], data['Rx'], data['Ry'], 6.9, 4.75).flatten()
 
     #print(end_pose[2])
 
@@ -58,4 +58,4 @@ def Cov(data):
 
     C_F_callable = sp.lambdify(variables, C_F, "numpy")
 
-    return C_F_callable(data['Lx'], data['Ly'], data['Rx'], data['Ry'], 10.0, 4.75).flatten()
+    return C_F_callable(data['Lx'], data['Ly'], data['Rx'], data['Ry'], 6.9, 4.75).flatten()
