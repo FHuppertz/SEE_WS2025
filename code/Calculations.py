@@ -12,6 +12,7 @@ manual_file_path3 = './data/bhavesh_measurements.csv'
 
 try:
     encoder_df = pd.read_csv(encoder_file_path, sep=r'\s+', header=None)
+
     manual_df = pd.read_csv(manual_file_path, header=None)
     manual_df2 = pd.read_csv(manual_file_path2, header=None)
     manual_df3 = pd.read_csv(manual_file_path3)
@@ -23,9 +24,10 @@ except FileNotFoundError:
 
 # Rename columns for clarity (matching the data structure: X, Y, Angle)
 encoder_df.columns = ['Y', 'X', 'Angle']
-encoder_df['X'] = -encoder_df['X']
-encoder_df['Y'] = -encoder_df['Y']
-encoder_df['Angle'] = -encoder_df['Angle'] + np.pi/2
+encoder_df['X'] *= -1.0
+encoder_df['Y'] *= -1.0
+encoder_df['Angle'] *= -1.0 
+encoder_df['Angle'] += np.pi/2
 
 #print(encoder_df['Angle'])
 
