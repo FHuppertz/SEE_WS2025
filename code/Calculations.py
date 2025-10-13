@@ -44,7 +44,7 @@ manual_df2[['X', 'Y', 'Angle']] = manual_df2.apply(End_Pose, axis=1, result_type
 manual_df3['Theta'] *= np.pi/180
 
 # Plot the results
-plt.figure(figsize=(10, 6))
+plt.figure()
 
 angles = [
     encoder_df['Angle'].min(),
@@ -63,7 +63,7 @@ min_angle = min(angles)
 encoder_scatter = plt.scatter(
     encoder_df['Y'],
     encoder_df['X'],
-    label='Encoder Data',
+    label='Encoder (Our Group)',
     s=0.1,
     c=encoder_df['Angle'],
     cmap='plasma',
@@ -74,7 +74,7 @@ encoder_scatter = plt.scatter(
 manual_scatter = plt.scatter(
     manual_df['Y'],
     manual_df['X'],
-    label='Manual Data',
+    label='Manual (Our Group)',
     marker='x',
     s=20,
     alpha=0.5,
@@ -87,7 +87,7 @@ manual_scatter = plt.scatter(
 manual_scatter2 = plt.scatter(
     manual_df2['Y'],
     manual_df2['X'],
-    label='Manual Data 2',
+    label='Manual (Group 2)',
     marker='s',
     s=20,
     alpha=0.5,
@@ -100,7 +100,7 @@ manual_scatter2 = plt.scatter(
 manual_scatter3 = plt.scatter(
     manual_df3['Y'],
     manual_df3['X'],
-    label='Manual Data 2',
+    label='Manual (Group 3)',
     marker='^',
     s=20,
     alpha=0.5,
@@ -113,13 +113,14 @@ manual_scatter3 = plt.scatter(
 plt.title('Robot pose and path')
 plt.xlabel('Y (cm)')
 plt.ylabel('X (cm)')
+plt.axis('equal')
 
 cbar = plt.colorbar(manual_scatter)
 cbar.set_label('Angle (Radians)', rotation=270, labelpad=15)
 cbar.set_ticks(list(np.linspace(min_angle, max_angle, 15)))
 
 plt.grid(True, linestyle='--', alpha=0.6)
-plt.legend()
+plt.legend(loc='lower right')
 plt.savefig('figures/pose_scatter_plot.png', dpi=500)
 plt.close()
 
