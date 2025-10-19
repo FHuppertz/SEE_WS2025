@@ -112,7 +112,7 @@ manual_scatter3 = plt.scatter(
     vmax=float(max_angle)
 )
 
-plt.title('Robot pose and path')
+plt.title('Manual measured robot end pose')
 plt.xlabel('Y (cm)')
 plt.ylabel('X (cm)')
 plt.axis('equal')
@@ -125,5 +125,50 @@ plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend(loc='lower right')
 plt.savefig('figures/all_pose_scatter_plot.png', dpi=500)
 plt.close()
+
+
+plt.figure()
+
+manual_scatter = plt.scatter(
+    manual_df['Y'],
+    manual_df['X'],
+    label='Manual End Poses',
+    marker='x',
+    s=20,
+    alpha=0.5,
+    c=manual_df['Angle'],
+    cmap='plasma',
+    vmin=float(min_angle),
+    vmax=float(max_angle)
+)
+
+encoder_scatter = plt.scatter(
+    encoder_df['Y'],
+    encoder_df['X'],
+    label='Encoder Data',
+    #marker='.',
+    s=0.1,
+    alpha=0.5,
+    c=encoder_df['Angle'],
+    cmap='plasma',
+    vmin=float(min_angle),
+    vmax=float(max_angle)
+)
+
+
+plt.title('Robot end pose and path (Team 1)')
+plt.xlabel('Y (cm)')
+plt.ylabel('X (cm)')
+plt.axis('equal')
+
+cbar = plt.colorbar(manual_scatter)
+cbar.set_label('Angle (Radians)', rotation=270, labelpad=15)
+cbar.set_ticks(list(np.linspace(min_angle, max_angle, 15)))
+
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend(loc='lower right')
+plt.savefig('figures/team1_pose_scatter_plot.png', dpi=500)
+plt.close()
+
 
 print('Finished plotting')
