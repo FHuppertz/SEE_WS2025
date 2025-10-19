@@ -26,7 +26,7 @@ except FileNotFoundError:
 encoder_df.columns = ['Y', 'X', 'Angle']
 encoder_df['X'] *= -1.0
 encoder_df['Y'] *= -1.0
-encoder_df['Angle'] *= -1.0 
+encoder_df['Angle'] *= -1.0
 encoder_df['Angle'] += np.pi/2
 
 #print(encoder_df['Angle'])
@@ -60,21 +60,10 @@ angles = [
 max_angle = max(angles)
 min_angle = min(angles)
 
-encoder_scatter = plt.scatter(
-    encoder_df['Y'],
-    encoder_df['X'],
-    label='Encoder (Our Group)',
-    s=0.1,
-    c=encoder_df['Angle'],
-    cmap='plasma',
-    vmin=float(min_angle),
-    vmax=float(max_angle)
-)
-
 manual_scatter = plt.scatter(
     manual_df['Y'],
     manual_df['X'],
-    label='Manual (Our Group)',
+    label='End Poses Team 1',
     marker='x',
     s=20,
     alpha=0.5,
@@ -87,7 +76,7 @@ manual_scatter = plt.scatter(
 manual_scatter2 = plt.scatter(
     manual_df2['Y'],
     manual_df2['X'],
-    label='Manual (Group 2)',
+    label='End Poses Team 2',
     marker='s',
     s=20,
     alpha=0.5,
@@ -100,7 +89,20 @@ manual_scatter2 = plt.scatter(
 manual_scatter3 = plt.scatter(
     manual_df3['Y'],
     manual_df3['X'],
-    label='Manual (Group 3)',
+    label='End Poses Team 3',
+    marker='^',
+    s=20,
+    alpha=0.5,
+    c=manual_df3['Theta'],
+    cmap='plasma',
+    vmin=float(min_angle),
+    vmax=float(max_angle)
+)
+
+manual_scatter3 = plt.scatter(
+    manual_df3['Y'],
+    manual_df3['X'],
+    label='End Poses Team 4',
     marker='^',
     s=20,
     alpha=0.5,
@@ -121,7 +123,7 @@ cbar.set_ticks(list(np.linspace(min_angle, max_angle, 15)))
 
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend(loc='lower right')
-plt.savefig('figures/pose_scatter_plot.png', dpi=500)
+plt.savefig('figures/all_pose_scatter_plot.png', dpi=500)
 plt.close()
 
 print('Finished plotting')
