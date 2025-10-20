@@ -1,18 +1,12 @@
-The propagation of uncertainty in the measured input coordinates requires the calculation of the \textbf{Jacobian matrix} $\mathbf{J}$. The total input vector $\mathbf{x} = (x_{1,1}, x_{1,2}, x_{2,1}, x_{2,2})^T$ is composed of all four scalar variables. Since $\mathbf{F}$ is a vector-valued function with three outputs and four inputs, the resulting Jacobian matrix $\mathbf{J}$ is a $3 \times 4$ matrix, presented in Equations \ref{eq:Jac} to \ref{eq:Jac_end}.
+The propagation of uncertainty in the measured input coordinates requires the calculation of the \textbf{Jacobian matrix} $\mathbf{J}$. The total input vector $\mathbf{x} = (L_x, L_y, R_x, R_y)^T$ is composed of all four scalar variables. Since $\mathbf{F}$ is a vector-valued function with three outputs and four inputs, the resulting Jacobian matrix $\mathbf{J}$ is a $3 \times 5$ matrix, presented in Equations \ref{eq:Jac}. It is important to note, that the resulting Jacobian is to large to display here and can be seen instead in the code provided in the zip file which includes this report.
 
 \begin{eqnarray}
 	\mathbf{J} &=& \frac{\partial \mathbf{F}}{\partial \mathbf{x}} =
 	\begin{pmatrix}
-		\frac{\partial F_1}{\partial x_{1,1}} & \frac{\partial F_1}{\partial x_{1,2}} & \frac{\partial F_1}{\partial x_{2,1}} & \frac{\partial F_1}{\partial x_{2,2}} \\
-		\frac{\partial F_2}{\partial x_{1,1}} & \frac{\partial F_2}{\partial x_{1,2}} & \frac{\partial F_2}{\partial x_{2,1}} & \frac{\partial F_2}{\partial x_{2,2}} \\
-		\frac{\partial F_3}{\partial x_{1,1}} & \frac{\partial F_3}{\partial x_{1,2}} & \frac{\partial F_3}{\partial x_{2,1}} & \frac{\partial F_3}{\partial x_{2,2}}
-	\end{pmatrix} \label{eq:Jac} \\
-	&=& \begin{pmatrix}
-		\frac{1}{2}               & 0                         & \frac{1}{2}               & 0                         \\
-		0                         & \frac{1}{2}               & 0                         & \frac{1}{2}               \\
-		\frac{x_{1,2}-x_{2,2}}{d} & \frac{x_{2,1}-x_{1,1}}{d} & \frac{x_{2,2}-x_{1,2}}{d} & \frac{x_{1,1}-x_{2,1}}{d}
-	\end{pmatrix} \\
-	d &=& (x_{1,1}-x_{2,1})^2+(x_{1,2}-x_{2,2})^2 \label{eq:Jac_end}
+		\frac{\partial F_1}{\partial L_x} & \frac{\partial F_1}{\partial L_y} & \frac{\partial F_1}{\partial R_x} & \frac{\partial F_1}{\partial R_y} & \frac{\partial F_1}{\partial A} \\
+		\frac{\partial F_2}{\partial L_x} & \frac{\partial F_2}{\partial L_y} & \frac{\partial F_2}{\partial R_x} & \frac{\partial F_2}{\partial R_y} & \frac{\partial F_2}{\partial A} \\
+		\frac{\partial F_3}{\partial L_x} & \frac{\partial F_3}{\partial L_y} & \frac{\partial F_3}{\partial R_x} & \frac{\partial F_3}{\partial R_y} & \frac{\partial F_3}{\partial A}
+	\end{pmatrix} \label{eq:Jac}
 \end{eqnarray}
 
 The \textbf{covariance matrix of the calculated end pose} $\mathbf{C}_F$ is then determined from the input covariance matrix $\mathbf{C}_x$ via the generalized error propagation formula, which can be seen in Equation \ref{eq:CF}
@@ -20,4 +14,4 @@ The \textbf{covariance matrix of the calculated end pose} $\mathbf{C}_F$ is then
 \begin{equation}
 	\mathbf{C}_F = \mathbf{J} \, \mathbf{C}_x \, \mathbf{J}^T, \label{eq:CF}
 \end{equation}
-where $\mathbf{C}_x$ is the $4 \times 4$ covariance matrix of the input variables $(x_{1,1}, x_{1,2}, x_{2,1}, x_{2,2})$.
+where $\mathbf{C}_x$ is the $5 \times 5$ covariance matrix of the input variables $(L_x, L_y, R_x, R_y, A)$.
