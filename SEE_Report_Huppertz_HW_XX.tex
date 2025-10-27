@@ -20,7 +20,14 @@
 \usepackage{algpseudocode}
 \usepackage{siunitx}
 \usepackage[framemethod=TikZ]{mdframed}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{array} % <--- Essential for fixed-width columns
 
+% Custom fixed-width centered column for numerical data
+\newcolumntype{N}[1]{>{\centering\arraybackslash}p{#1}}
 
 \mdfdefinestyle{frameStyle}{%
 	roundcorner=5pt,

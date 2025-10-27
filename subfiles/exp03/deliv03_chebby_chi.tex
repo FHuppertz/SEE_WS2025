@@ -1,4 +1,4 @@
-When we use the Chebishov function to remove the outliers with using the threshold as 2.0 standard deviations, we were able to remove 7 outliers in total out of the 75 manual readings that we measured. For reference we are attaching a screenshot of the results from the code we ran to find this.
+When we use the Chebishov function to remove the outliers with using the threshold as 2.0 standard deviations, we were able to remove 7 outliers in total out of the 75 manual readings that we measured. For reference we are attaching a screenshot of the results from the code we ran to find this in Figur \ref{fig:chebyshov_results}
 
 \begin{figure}[H]
 	\centering
@@ -10,9 +10,9 @@ When we use the Chebishov function to remove the outliers with using the thresho
 
 
 
-To further characterize the data's dispersion, statistical boundaries were calculated for the [Theta, $X, Y$] data for each travel direction. Confidence regions were generated for each data using two distinct methods: Chebyshev's inequality and the Chi-Squared ($\chi^2$) distribution. Figures \ref{fig:chi_square_Left_Theta} to \ref{fig:graph_N} depict these data with their corresponding boundaries.
+To further characterize the data's dispersion, statistical boundaries were calculated for the [Theta, $X, Y$] data for each travel direction. Confidence regions were generated for each data using two distinct methods: Chebyshev's inequality and the Chi-Squared ($\chi^2$) distribution. Figures \ref{fig:chi_square_Left_Theta} to \ref{fig:chi_square_Straight} depict these data with their corresponding boundaries.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 	\centering
 	\begin{subfigure}[b]{0.45\linewidth}
 		\centering
@@ -28,7 +28,7 @@ To further characterize the data's dispersion, statistical boundaries were calcu
 		\label{fig:chi_square_Left_X}
 	\end{subfigure}
 
-	\vspace{1em} 
+	\vspace{1em}
 
 	\begin{subfigure}[b]{0.45\linewidth}
 		\centering
@@ -42,7 +42,7 @@ To further characterize the data's dispersion, statistical boundaries were calcu
 \end{figure}
 
 
-\begin{figure}[ht]
+\begin{figure}[H]
 	\centering
 	\begin{subfigure}[b]{0.45\linewidth}
 		\centering
@@ -58,7 +58,7 @@ To further characterize the data's dispersion, statistical boundaries were calcu
 		\label{fig:chi_square_Right_X}
 	\end{subfigure}
 
-	\vspace{1em} 
+	\vspace{1em}
 
 	\begin{subfigure}[b]{0.45\linewidth}
 		\centering
@@ -73,7 +73,7 @@ To further characterize the data's dispersion, statistical boundaries were calcu
 
 
 
-\begin{figure}[ht]
+\begin{figure}[H]
 	\centering
 	\begin{subfigure}[b]{0.45\linewidth}
 		\centering
@@ -89,7 +89,7 @@ To further characterize the data's dispersion, statistical boundaries were calcu
 		\label{fig:chi_square_Straight_X}
 	\end{subfigure}
 
-	\vspace{1em} 
+	\vspace{1em}
 
 	\begin{subfigure}[b]{0.45\linewidth}
 		\centering
@@ -101,9 +101,3 @@ To further characterize the data's dispersion, statistical boundaries were calcu
 	\label{fig:chi_square_Straight}
 	\hfill
 \end{figure}
-
-We could very well see which graphs are fitting into the Gaussian defenition and which ones are not. The Left and Right robot movements are not Gaussian at all meanwhile the Forward movement is a perfect Gaussian fit.
-
-
-
-

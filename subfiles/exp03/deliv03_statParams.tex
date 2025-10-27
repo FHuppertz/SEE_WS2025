@@ -1,21 +1,81 @@
+Table \ref{tab:statistical_params} contains statistical information for all motion directions and axes (X, Y, and Theta).
 
-\section{Chi-Square Test Summary}
+\begin{table}[H]
+	\centering
+	\label{tab:combined_all_stats_final_concise}
 
-Table~\ref{tab:chi_square_summary} summarizes the results of the Chi-Square Gaussian tests for all motion directions and axes (X, Y, and Theta). The results were automatically loaded from the generated CSV file.
+	% Minipage 1: Left Direction
+	\begin{minipage}{\linewidth}
+		\centering
+		% --- RESIZEBOX APPLIED HERE ---
+		\resizebox{\linewidth}{!}{
+			% Adjusted column specification to make the Result column smaller
+			\begin{tabular}{|c|N{1.6cm}|N{1.4cm}|N{1.4cm}|N{1.8cm}|c|}
+				\hline
+				\textbf{Axis} & \textbf{Mean} & \textbf{Std. Dev. ($\sigma$)} & \textbf{$\chi^2$ Stat} & \textbf{$p$-value}   & \textbf{$H_0$} \\
+				\hline
+				X             & 34.874 cm     & 0.642 cm                      & 8.988                  & 0.254                & Accept         \\
+				\hline
+				Y             & -16.988 cm    & 0.779 cm                      & 15.345                 & 0.032                & Reject         \\
+				\hline
+				$\Theta$      & -0.935 rad    & 0.067 rad                     & 41.871                 & $5.5 \times 10^{-7}$ & Reject         \\
+				\hline
+			\end{tabular}
+		} % End of \resizebox
+		% Caption moved below the subtable
+		\caption*{\textbf{Table A: Left Direction}}
+		\label{tab:sub_left_final_captioned_concise}
+		\vspace{0.8em}
+	\end{minipage}
 
-\begin{table}[h!]
-\centering
-\caption{Statistical parameters corresponding to the observed robot motion behaviour.}
-\label{tab:statistical_params}
-\pgfplotstableread[col sep=comma]{../../data/chi_square_summary_left.csv}\chisquaredata
-\pgfplotstabletypeset[
-    columns={col_name, direction, statistic, p_value, conclusion},
-    columns/col_name/.style={string type, column name={Axis}},
-    columns/direction/.style={string type, column name={Direction}},
-    columns/statistic/.style={fixed, precision=3, column name={Chi-Square Statistic}},
-    columns/p_value/.style={sci, precision=3, column name={$p$-Value}},
-    columns/conclusion/.style={string type, column name={Conclusion}},
-    every head row/.style={before row=\toprule, after row=\midrule},
-    every last row/.style={after row=\bottomrule},
-]{\chisquaredata}
+	% Minipage 2: Right Direction
+	\begin{minipage}{\linewidth}
+		\centering
+		% --- RESIZEBOX APPLIED HERE ---
+		\resizebox{\linewidth}{!}{
+			% Using the EXACT same fixed-width columns
+			\begin{tabular}{|c|N{1.6cm}|N{1.4cm}|N{1.4cm}|N{1.8cm}|c|}
+				\hline
+				\textbf{Axis} & \textbf{Mean} & \textbf{Std. Dev. ($\sigma$)} & \textbf{$\chi^2$ Stat} & \textbf{$p$-value} & \textbf{$H_0$} \\
+				\hline
+				X             & 35.460 cm     & 0.584 cm                      & 9.854                  & 0.197              & Accept         \\
+				\hline
+				Y             & 16.245 cm     & 0.848 cm                      & 17.325                 & 0.015              & Reject         \\
+				\hline
+				$\Theta$      & 0.924 rad     & 0.041 rad                     & 17.553                 & 0.014              & Reject         \\
+				\hline
+			\end{tabular}
+		} % End of \resizebox
+		% Caption moved below the subtable
+		\caption*{\textbf{Table B: Right Direction}}
+		\label{tab:sub_right_final_captioned_concise}
+		\vspace{0.8em}
+	\end{minipage}
+
+	% Minipage 3: Straight Direction
+	\begin{minipage}{\linewidth}
+		\centering
+		% --- RESIZEBOX APPLIED HERE ---
+		\resizebox{\linewidth}{!}{
+			% Using the EXACT same fixed-width columns
+			\begin{tabular}{|c|N{1.6cm}|N{1.4cm}|N{1.4cm}|N{1.8cm}|c|}
+				\hline
+				\textbf{Axis} & \textbf{Mean} & \textbf{Std. Dev. ($\sigma$)} & \textbf{$\chi^2$ Stat} & \textbf{$p$-value}   & \textbf{$H_0$} \\
+				\hline
+				X             & 46.925 cm     & 0.871 cm                      & 26.944                 & $3.4 \times 10^{-4}$ & Reject         \\
+				\hline
+				Y             & -0.114 cm     & 0.560 cm                      & 13.030                 & 0.071                & Accept         \\
+				\hline
+				$\Theta$      & -0.006 rad    & 0.020 rad                     & 14.031                 & 0.051                & Accept         \\
+				\hline
+			\end{tabular}
+		} % End of \resizebox
+		% Caption moved below the subtable
+		\caption*{\textbf{Table C: Straight Direction}}
+		\label{tab:sub_straight_final_captioned_concise}
+	\end{minipage}
+
+	% Main caption moved to the very bottom
+	\caption{Summary of Statistical Analysis by Movement Direction}
+	\label{tab:statistical_params}
 \end{table}
