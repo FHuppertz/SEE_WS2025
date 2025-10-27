@@ -1,100 +1,11 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import chi2, norm
-from mpl_toolkits.mplot3d import Axes3D
-import itertools
+from scipy.stats import chi2
+from matplotlib.patches import Ellipse
+import matplotlib.colors as mcolors
 
 # --- Helper Functions from Original Code ---
-
-def plot_3d_gaussian_ellipsoid(df, column_names, confidence_levels=[0.95, 0.6827]):
-    """
-    Analyzes 3D continuous data from a Pandas DataFrame, fits a Trivariate
-    Normal distribution, and plots the data with confidence ellipsoids.
-    (Kept for reference, though 2D is likely needed for the assignment)
-    """
-
-    # 1. Prepare and Check Data
-    if len(column_names) != 3:
-        raise ValueError("Must provide exactly three column names for 3D analysis.")
-
-    data = df[column_names].values
-    n_points = data.shape[0]
-    if n_points < 4:
-        raise ValueError("Requires at least 4 data points for covariance calculation.")
-
-    # 2. Calculate Trivariate Normal Parameters
-    center = np.mean(data, axis=0)
-    cov_matrix = np.cov(data, rowvar=False)
-    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
-    k = 3
-
-    print("\n--- Trivariate Normal Distribution Parameters ---")
-    print(f"Mean Vector (mu):\n{center}")
-    print(f"\nCovariance Matrix (Sigma):\n{cov_matrix}")
-    print(f"\nEigenvalues (Lambda):\n{eigenvalues}")
-
-    # 3. Setup Plot
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(data[:, 0], data[:, 1], data[:, 2],
-               s=10, alpha=0.6, label='Data Points')
-    ax.scatter(center[0], center[1], center[2],
-               s=100, color='k', marker='o', label='Mean Center')
-
-    # 4. Plot Ellipsoids for specified confidence levels
-
-    # Generate points on a unit sphere (helper for plotting)
-    u = np.linspace(0.0, 2.0 * np.pi, 100)
-    v = np.linspace(0.0, np.pi, 100)
-
-    for conf_level in confidence_levels:
-
-        # Calculate critical Chi-square value (c)
-        c = chi2.ppf(conf_level, k)
-
-        # Calculate Radii for this confidence level: sqrt(c * eigenvalue)
-        radii = np.sqrt(c * eigenvalues)
-
-        # Ellipsoid coordinates generation
-        x = radii[0] * np.outer(np.cos(u), np.sin(v))
-        y = radii[1] * np.outer(np.sin(u), np.sin(v))
-        z = radii[2] * np.outer(np.ones_like(u), np.cos(v))
-
-        # Combine unit points into a matrix
-        points = np.vstack([x.ravel(), y.ravel(), z.ravel()])
-
-        # Rotate and translate points to form the scaled ellipsoid
-        # (rotation matrix is the eigenvectors)
-        transformed_points = eigenvectors @ points
-
-        # Reshape and translate
-        x_rotated = transformed_points[0].reshape(x.shape) + center[0]
-        y_rotated = transformed_points[1].reshape(y.shape) + center[1]
-        z_rotated = transformed_points[2].reshape(z.shape) + center[2]
-
-        # Plot the surface
-        ax.plot_surface(x_rotated, y_rotated, z_rotated, rstride=3, cstride=3,
-                        color='r' if conf_level == 0.95 else 'b',
-                        alpha=0.1 + (1-conf_level)/2, # Tighter ellipse is slightly less transparent
-                        linewidth=0, shade=False,
-                        label=f'{conf_level*100:.0f}% Confidence Ellipsoid')
-
-    # 5. Final Plot Customization
-    ax.set_xlabel(column_names[0])
-    ax.set_ylabel(column_names[1])
-    ax.set_zlabel(column_names[2])
-    ax.set_title(f'Trivariate Normal Fit of 3D Data (N={n_points})')
-
-    # Create a dummy element for the legend since plot_surface doesn't support labels well
-    from matplotlib.lines import Line2D
-    custom_lines = [Line2D([0], [0], color='r', lw=4, alpha=0.3),
-                    Line2D([0], [0], color='b', lw=4, alpha=0.4)]
-    ax.legend(custom_lines, ['95.0% Confidence', '68.3% Confidence'], loc='upper right')
-
-    plt.savefig('stat_plot_3d.png')
-    plt.close()
-
 
 # ----------------------------------------------------
 #               NEW FUNCTIONS FOR ASSIGNMENT 3
@@ -295,7 +206,62 @@ def plot_2d_pca_and_ellipse(df, column_names=['X', 'Y'], conf_level=0.95, filena
     # Return covariance matrix for comparison with model uncertainty
     return cov_matrix, center
 
-# ----------------------------------------------------
-#               EXAMPLE USAGE (Removed/Modified)
-# ----------------------------------------------------
-# (The original example usage is removed to keep the file as a module of functions.)
+def plot_ellipsoid(a_vec, b_vec, c_vec):
+    # 1. Define the Ellipsoid Vectors
+    # NOTE: Replace these sample vectors with your actual vector data.
+    # The code will extract the magnitudes A, B, C.
+    # For this example, A=3, B=2, C=1.
+
+    # Extract semi-axis lengths (A, B, C) from the vector magnitudes
+    A = np.linalg.norm(a_vec)
+    B = np.linalg.norm(b_vec)
+    C = np.linalg.norm(c_vec)
+
+    # 2. Create Grid and Calculate Depth
+    # Define the range for the 2D plot (plane of a and b)
+    # We use 300 points for a smooth image
+    points = 300
+    x_range = np.linspace(-A, A, points)
+    y_range = np.linspace(-B, B, points)
+    X, Y = np.meshgrid(x_range, y_range)
+
+    # Calculate the fractional squared sum of the (x, y) coordinates
+    # This is the left-hand side of the projection ellipse equation: (x/A)^2 + (y/B)^2
+    frac_sum_sq = (X/A)**2 + (Y/B)**2
+
+    # Initialize the depth matrix Z
+    Z = np.zeros_like(X)
+
+    # Find the points inside the ellipse projection (where the sum is <= 1)
+    inside = frac_sum_sq <= 1
+
+    # Calculate the depth Z = C * sqrt(1 - (x/A)^2 - (y/B)^2)
+    # Use np.maximum(0, ...) to clamp tiny negative values to zero, preventing the sqrt warning.
+    depth_arg = np.maximum(0, 1 - frac_sum_sq) 
+
+    Z = np.where(inside, C * np.sqrt(depth_arg), np.nan)
+
+    # 3. Plot the Heatmap
+    plt.figure(figsize=(8, 8))
+
+    # Use imshow to display the Z matrix as a heatmap
+    plt.imshow(Z, origin='lower', extent=[-A, A, -B, B], cmap='viridis',
+            interpolation='nearest')
+
+    # Add a color bar to show the depth scale
+    cbar = plt.colorbar(label='Depth along $\\mathbf{c}$ $|z|$')
+
+    # Set labels for the axes (aligned with vectors a and b)
+    plt.xlabel('Component along $\\mathbf{a}$ ($x$)')
+    plt.ylabel('Component along $\\mathbf{b}$ ($y$)')
+    plt.title(f'Ellipsoid Projection (A={A:.2f}, B={B:.2f}, C={C:.2f}) with Depth Heatmap')
+    # Ensure the aspect ratio is correct for the plot
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.savefig('ellipsoid_projection_heatmap.png')
+
+if __name__ == '__main__':
+    a_vec = np.array([3, 3, 0])
+    b_vec = np.array([-1, 1, 0])
+    c_vec = np.array([0, 0, 1])
+
+    plot_ellipsoid(a_vec, b_vec, c_vec)

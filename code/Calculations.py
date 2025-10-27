@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from Functions import End_Pose, Cov
+from stat_analysis import plot_2d_projection_with_depth_color
 
 manual_file_path1 = '../data/group1/manual_measurements.csv'
 encoder_file_path1 = '../data/group1/robot_path.csv'
@@ -61,6 +62,7 @@ manual_df4['Theta'] *= np.pi/180
 encoder_df4.columns = ['Y', 'X', 'Theta']
 encoder_df4['Theta'] -= np.pi/2
 
+'''
 # Plot the results
 plt.figure()
 
@@ -328,6 +330,16 @@ plt.close()
 
 print('Finished plotting')
 
+#'''
+
+##### Deliv 03 Statistics
+left_df1 = manual_df1[manual_df1['Theta'] < -0.5]
+straight_df1 = manual_df1[(manual_df1['Theta'] >= -0.5) & (manual_df1['Theta'] < 0.5)]
+right_df1 = manual_df1[manual_df1['Theta'] >= 0.5]
+
+plot_2d_projection_with_depth_color(left_df1, ['X', 'Y', 'Theta'])
+
+'''
 
 # ====================================================
 #               ASSIGNMENT 3 ANALYSIS STEPS
@@ -340,7 +352,7 @@ from Functions import End_Pose, Cov # Cov is needed for step 6
 # Assuming you want to analyze all combined manual measurements
 # You must ensure the coordinate frames (X, Y, Angle) are consistent across all manual_df
 combined_df = pd.concat([
-    manual_df[['X', 'Y', 'Angle']],
+    manual_df1[['X', 'Y', 'Angle']],
     manual_df2[['X', 'Y', 'Angle']],
     manual_df3[['X', 'Y', 'Theta']].rename(columns={'Theta': 'Angle'})
 ], ignore_index=True)
@@ -403,7 +415,7 @@ C_obs, mean_obs = plot_2d_pca_and_ellipse(
 # a. Calculate Model Uncertainty (C_model) using Covariance Propagation
 # We use the mean of the input variables (Lx, Ly, Rx, Ry) to evaluate the Jacobian J
 # Note: A and T are assumed constant (6.9, 4.75) as per Functions.py
-mean_input_data = pd.concat([manual_df, manual_df2])[['Lx', 'Ly', 'Rx', 'Ry']].mean()
+mean_input_data = pd.concat([manual_df1, manual_df2])[['Lx', 'Ly', 'Rx', 'Ry']].mean()
 # Add A and T as fixed values to the dictionary for input to the Cov function
 input_for_cov = mean_input_data.to_dict()
 input_for_cov['A'] = 6.9
@@ -435,9 +447,9 @@ print('='*50)
 
 
 #plot after outlier removed
-original_team1_indices = manual_df.index
-manual_df_filtered, _ = chebyshev_outlier_removal(
-    manual_df,
+original_team1_indices = manual_df1.index
+manual_df1_filtered, _ = chebyshev_outlier_removal(
+    manual_df1,
     column_names=['X', 'Y', 'Angle'],
     threshold_sigma=2.0
 )
@@ -445,25 +457,25 @@ manual_df_filtered, _ = chebyshev_outlier_removal(
 plt.figure()
 
 manual_filtered_scatter = plt.scatter(
-    manual_df_filtered['Y'],
-    manual_df_filtered['X'],
+    manual_df1_filtered['Y'],
+    manual_df1_filtered['X'],
     label='Manual End Poses (Outliers Removed)',
     marker='x',
     s=20,
     alpha=0.7,
-    c=manual_df_filtered['Angle'],
+    c=manual_df1_filtered['Angle'],
     cmap='plasma',
     vmin=float(min_angle),
     vmax=float(max_angle)
 )
 
 encoder_scatter = plt.scatter(
-    encoder_df['Y'],
-    encoder_df['X'],
+    encoder_df1['Y'],
+    encoder_df1['X'],
     label='Encoder Data Path',
     s=0.1,
     alpha=0.5,
-    c=encoder_df['Angle'],
+    c=encoder_df1['Angle'],
     cmap='plasma',
     vmin=float(min_angle),
     vmax=float(max_angle)
@@ -483,3 +495,5 @@ plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend(loc='lower right')
 plt.savefig('figures/team1_filtered_pose_scatter_plot.png', dpi=500)
 plt.close()
+
+'''
