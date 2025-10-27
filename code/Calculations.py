@@ -355,3 +355,27 @@ for name in col_names:
     chi_square_gaussian_test(left_df1[name], col_name=name, num_bins=10, direction='Left')
     chi_square_gaussian_test(straight_df1[name], col_name=name, num_bins=10, direction='Straight')
     chi_square_gaussian_test(right_df1[name], col_name=name, num_bins=10, direction='Right')
+
+
+results = []
+
+# Loop through each motion direction and its corresponding dataframe
+for direction, df in [('Left', left_df1), ('Right', right_df1), ('Straight', straight_df1)]:
+    for axis in ['X', 'Y', 'Theta']:
+        res = chi_square_gaussian_test(
+            data=df[axis].values,
+            col_name=axis,
+            num_bins=10,
+            direction=direction
+        )
+        if res is not None:
+            results.append(res)
+
+# Combine all results into one summary DataFrame
+chi_summary_df = pd.DataFrame(results)
+print(chi_summary_df)
+
+# Save to a single summary file (with all directions)
+chi_summary_df.to_csv('../data/chi_square_summary.csv', index=False)
+
+
