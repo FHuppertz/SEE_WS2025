@@ -1,0 +1,21 @@
+
+\section{Chi-Square Test Summary}
+
+Table~\ref{tab:chi_square_summary} summarizes the results of the Chi-Square Gaussian tests for all motion directions and axes (X, Y, and Theta). The results were automatically loaded from the generated CSV file.
+
+\begin{table}[h!]
+\centering
+\caption{Statistical parameters corresponding to the observed robot motion behaviour.}
+\label{tab:statistical_params}
+\pgfplotstableread[col sep=comma]{../../data/chi_square_summary_left.csv}\chisquaredata
+\pgfplotstabletypeset[
+    columns={col_name, direction, statistic, p_value, conclusion},
+    columns/col_name/.style={string type, column name={Axis}},
+    columns/direction/.style={string type, column name={Direction}},
+    columns/statistic/.style={fixed, precision=3, column name={Chi-Square Statistic}},
+    columns/p_value/.style={sci, precision=3, column name={$p$-Value}},
+    columns/conclusion/.style={string type, column name={Conclusion}},
+    every head row/.style={before row=\toprule, after row=\midrule},
+    every last row/.style={after row=\bottomrule},
+]{\chisquaredata}
+\end{table}
