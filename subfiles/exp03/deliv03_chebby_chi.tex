@@ -1,0 +1,109 @@
+When we use the Chebishov function to remove the outliers with using the threshold as 2.0 standard deviations, we were able to remove 7 outliers in total out of the 75 manual readings that we measured. For reference we are attaching a screenshot of the results from the code we ran to find this.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{figures/chebyshov_results.png}
+	\caption{The results of the Chebyshov funciton removing the outliers from the manual data.}
+	\label{fig:chebyshov_results}
+\end{figure}
+
+
+
+
+To further characterize the data's dispersion, statistical boundaries were calculated for the [Theta, $X, Y$] data for each travel direction. Confidence regions were generated for each data using two distinct methods: Chebyshev's inequality and the Chi-Squared ($\chi^2$) distribution. Figures \ref{fig:chi_square_Left_Theta} to \ref{fig:graph_N} depict these data with their corresponding boundaries.
+
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/chi_square_Left_Theta.png}
+		\caption{$\chi^2$ for Left Theta}
+		\label{fig:chi_square_Left_Theta}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/chi_square_Left_X.png}
+		\caption{$\chi^2$ for Left X}
+		\label{fig:chi_square_Left_X}
+	\end{subfigure}
+
+	\vspace{1em} 
+
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/chi_square_Left_Y.png}
+		\caption{$\chi^2$ for Left Y}
+		\label{fig:chi_square_Left_Y}
+	\end{subfigure}
+	\caption{The figures above (\subref{fig:chi_square_Left_Theta} to \subref{fig:chi_square_Left_Y}) represent the Gaussian graph along the data of the motion of the robot going left with respective to Theta, X and Y.}
+	\label{fig:chi_square_Left}
+	\hfill
+\end{figure}
+
+
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/chi_square_Right_Theta.png}
+		\caption{$\chi^2$ for Right Theta}
+		\label{fig:chi_square_Right_Theta}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/chi_square_Right_X.png}
+		\caption{$\chi^2$ for Right X}
+		\label{fig:chi_square_Right_X}
+	\end{subfigure}
+
+	\vspace{1em} 
+
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/chi_square_Right_Y.png}
+		\caption{$\chi^2$ for Right Y}
+		\label{fig:chi_square_Right_Y}
+	\end{subfigure}
+	\caption{The figures above (\subref{fig:chi_square_Right_Theta} to \subref{fig:chi_square_Right_Y}) represent the Gaussian graph along the data of the motion of the robot going right with respective to Theta, X and Y.}
+	\label{fig:chi_square_Right}
+	\hfill
+\end{figure}
+
+
+
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/chi_square_Straight_Theta.png}
+		\caption{$\chi^2$ for Straight Theta}
+		\label{fig:chi_square_Straight_Theta}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/chi_square_Straight_X.png}
+		\caption{$\chi^2$ for Straight X}
+		\label{fig:chi_square_Straight_X}
+	\end{subfigure}
+
+	\vspace{1em} 
+
+	\begin{subfigure}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/chi_square_Straight_Y.png}
+		\caption{$\chi^2$ for Straight Y}
+		\label{fig:chi_square_Straight_Y}
+	\end{subfigure}
+	\caption{The figures above (\subref{fig:chi_square_Straight_Theta} to \subref{fig:chi_square_Straight_Y}) represent the Gaussian graph along the data of the motion of the robot going right with respective to Theta, X and Y.}
+	\label{fig:chi_square_Straight}
+	\hfill
+\end{figure}
+
+We could very well see which graphs are fitting into the Gaussian defenition and which ones are not. The Left and Right robot movements are not Gaussian at all meanwhile the Forward movement is a perfect Gaussian fit.
+
+
+
+
