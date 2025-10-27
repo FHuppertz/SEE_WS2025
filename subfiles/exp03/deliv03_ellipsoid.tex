@@ -1,0 +1,22 @@
+To further analyse the data, a priciple component analysis (PCA) was done for the manual data for each direction the robot traveled. An ellipsoid for each direction was calculated based on the priciple components (PCs) of their respective point cloud (the $X$, $Y$, $Theta$ data points). Figures \ref{fig:ellip_left} to \ref{fig:ellip_right} depict these point clouds with their ellipsoids. In these figures, the priciple components were set to a lenght of two standard deviations $\sigma$ calculated from their corresponding priciple component. As the PC for $Theta$ is very small numerically, it needed to be magnified, which lead to a skewed projection.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{figures/Left_ellipsoid_3d_view}
+	\caption{3D Ellipsoid based on PCA of manual data for the left direction}
+	\label{fig:ellip_left}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{figures/Straight_ellipsoid_3d_view}
+	\caption{3D Ellipsoid based on PCA of manual data for the Straight direction}
+	\label{fig:ellip_straight}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{figures/Right_ellipsoid_3d_view}
+	\caption{3D Ellipsoid based on PCA of manual data for the right direction}
+	\label{fig:ellip_right}
+\end{figure}

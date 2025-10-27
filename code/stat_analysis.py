@@ -1,100 +1,11 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import chi2, norm
-from mpl_toolkits.mplot3d import Axes3D
-import itertools
+from sklearn.decomposition import PCA
+from matplotlib.colors import ListedColormap
+from matplotlib.lines import Line2D
 
 # --- Helper Functions from Original Code ---
-
-def plot_3d_gaussian_ellipsoid(df, column_names, confidence_levels=[0.95, 0.6827]):
-    """
-    Analyzes 3D continuous data from a Pandas DataFrame, fits a Trivariate
-    Normal distribution, and plots the data with confidence ellipsoids.
-    (Kept for reference, though 2D is likely needed for the assignment)
-    """
-
-    # 1. Prepare and Check Data
-    if len(column_names) != 3:
-        raise ValueError("Must provide exactly three column names for 3D analysis.")
-
-    data = df[column_names].values
-    n_points = data.shape[0]
-    if n_points < 4:
-        raise ValueError("Requires at least 4 data points for covariance calculation.")
-
-    # 2. Calculate Trivariate Normal Parameters
-    center = np.mean(data, axis=0)
-    cov_matrix = np.cov(data, rowvar=False)
-    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
-    k = 3
-
-    print("\n--- Trivariate Normal Distribution Parameters ---")
-    print(f"Mean Vector (mu):\n{center}")
-    print(f"\nCovariance Matrix (Sigma):\n{cov_matrix}")
-    print(f"\nEigenvalues (Lambda):\n{eigenvalues}")
-
-    # 3. Setup Plot
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(data[:, 0], data[:, 1], data[:, 2],
-               s=10, alpha=0.6, label='Data Points')
-    ax.scatter(center[0], center[1], center[2],
-               s=100, color='k', marker='o', label='Mean Center')
-
-    # 4. Plot Ellipsoids for specified confidence levels
-
-    # Generate points on a unit sphere (helper for plotting)
-    u = np.linspace(0.0, 2.0 * np.pi, 100)
-    v = np.linspace(0.0, np.pi, 100)
-
-    for conf_level in confidence_levels:
-
-        # Calculate critical Chi-square value (c)
-        c = chi2.ppf(conf_level, k)
-
-        # Calculate Radii for this confidence level: sqrt(c * eigenvalue)
-        radii = np.sqrt(c * eigenvalues)
-
-        # Ellipsoid coordinates generation
-        x = radii[0] * np.outer(np.cos(u), np.sin(v))
-        y = radii[1] * np.outer(np.sin(u), np.sin(v))
-        z = radii[2] * np.outer(np.ones_like(u), np.cos(v))
-
-        # Combine unit points into a matrix
-        points = np.vstack([x.ravel(), y.ravel(), z.ravel()])
-
-        # Rotate and translate points to form the scaled ellipsoid
-        # (rotation matrix is the eigenvectors)
-        transformed_points = eigenvectors @ points
-
-        # Reshape and translate
-        x_rotated = transformed_points[0].reshape(x.shape) + center[0]
-        y_rotated = transformed_points[1].reshape(y.shape) + center[1]
-        z_rotated = transformed_points[2].reshape(z.shape) + center[2]
-
-        # Plot the surface
-        ax.plot_surface(x_rotated, y_rotated, z_rotated, rstride=3, cstride=3,
-                        color='r' if conf_level == 0.95 else 'b',
-                        alpha=0.1 + (1-conf_level)/2, # Tighter ellipse is slightly less transparent
-                        linewidth=0, shade=False,
-                        label=f'{conf_level*100:.0f}% Confidence Ellipsoid')
-
-    # 5. Final Plot Customization
-    ax.set_xlabel(column_names[0])
-    ax.set_ylabel(column_names[1])
-    ax.set_zlabel(column_names[2])
-    ax.set_title(f'Trivariate Normal Fit of 3D Data (N={n_points})')
-
-    # Create a dummy element for the legend since plot_surface doesn't support labels well
-    from matplotlib.lines import Line2D
-    custom_lines = [Line2D([0], [0], color='r', lw=4, alpha=0.3),
-                    Line2D([0], [0], color='b', lw=4, alpha=0.4)]
-    ax.legend(custom_lines, ['95.0% Confidence', '68.3% Confidence'], loc='upper right')
-
-    plt.savefig('stat_plot_3d.png')
-    plt.close()
-
 
 # ----------------------------------------------------
 #               NEW FUNCTIONS FOR ASSIGNMENT 3
@@ -132,7 +43,7 @@ def chebyshev_outlier_removal(df, column_names, threshold_sigma=2.0):
     return df_filtered, outliers_df
 
 
-def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_histogram.png'):
+def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_histogram.png', direction='Left'):
     """
     Performs the Chi-square goodness-of-fit test for a 1D Gaussian distribution
     and plots the histogram with the fitted Gaussian PDF.
@@ -147,7 +58,6 @@ def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_h
 
     # 1. Calculate Observed Frequencies (O_i) and Bin Edges
     O_i, bin_edges, _ = plt.hist(data, bins=num_bins, density=False, label='Observed Data')
-    plt.close() # Close the temporary plot
 
     # 2. Calculate Expected Frequencies (E_i)
     # The probability of falling in bin i is P_i = CDF(upper_edge) - CDF(lower_edge)
@@ -184,22 +94,7 @@ def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_h
     critical_value = chi2.ppf(1 - alpha, df)
     p_value = 1 - chi2.cdf(chi2_stat, df)
 
-    # 5. Plotting (Histogram and PDF)
-    plt.figure(figsize=(8, 5))
-    plt.hist(data, bins=num_bins, density=True, alpha=0.6, label=f'Data: {col_name}')
-    xmin, xmax = plt.xlim()
-    x = np.linspace(xmin, xmax, 100)
-    pdf = norm.pdf(x, mu, std)
-    plt.plot(x, pdf, 'r-', linewidth=2, label='Fitted Gaussian PDF')
-    plt.title(f'Gaussian Fit & $\chi^2$ Test for {col_name}')
-    plt.xlabel(col_name)
-    plt.ylabel('Density')
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.savefig(f'figures/{filename}_{col_name}.png', dpi=300)
-    plt.close()
-
-    # 6. Conclusion
+    # 5. Conclusion
     is_gaussian = p_value > alpha # Null hypothesis is that data is Gaussian
     result_str = "ACCEPTED (Data is likely Gaussian)" if is_gaussian else "REJECTED (Data is NOT Gaussian)"
 
@@ -211,91 +106,186 @@ def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_h
     print(f"P-value: {p_value:.4f}")
     print(f"Null Hypothesis (Data is Gaussian) is: {result_str}")
 
-    return chi2_stat, df, p_value
-
-
-def plot_2d_pca_and_ellipse(df, column_names=['X', 'Y'], conf_level=0.95, filename='pca_ellipse_plot.png'):
-    """
-    Performs PCA on 2D data, plots the data in the new space, and adds the
-    confidence ellipse (the statistical uncertainty).
-
-    Args:
-        df (pd.DataFrame): Input DataFrame with X and Y columns.
-        column_names (list): The two column names to use (e.g., ['X', 'Y']).
-        conf_level (float): Confidence level for the ellipse (e.g., 0.95 for 95%).
-    """
-    if len(column_names) != 2:
-        raise ValueError("Must provide exactly two column names for 2D analysis.")
-
-    data = df[column_names].values
-    center = np.mean(data, axis=0) # Mean vector (\mu)
-    cov_matrix = np.cov(data, rowvar=False) # Covariance matrix (\Sigma)
-    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix) # PCA: Eigen-decomposition
-
-    # Sort in descending order (largest eigenvalue first)
-    order = eigenvalues.argsort()[::-1]
-    eigenvalues = eigenvalues[order]
-    eigenvectors = eigenvectors[:, order]
-
-    k = 2 # Degrees of freedom for Chi-squared distribution (2D)
-    c = chi2.ppf(conf_level, k) # Critical Chi-square value
-
-    # Radii: sqrt(c * eigenvalue)
-    radii = np.sqrt(c * eigenvalues)
-
-    print("\n--- 2D PCA and Statistical Uncertainty ---")
-    print(f"Mean (X, Y):\n{center}")
-    print(f"Covariance Matrix (Sigma):\n{cov_matrix}")
-    print(f"Principal Components (Eigenvectors):\n{eigenvectors}")
-    print(f"Eigenvalues (Variance along PC):\n{eigenvalues}")
-    print(f"Ellipse Radii ({conf_level*100:.0f}%):\n{radii}")
-    print(f"Angle of largest PC: {np.degrees(np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])):.2f} degrees")
-
-    # Angle of rotation for the ellipse (angle of the first principal component)
-    angle_rad = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
-    rotation_matrix = np.array([
-        [np.cos(angle_rad), -np.sin(angle_rad)],
-        [np.sin(angle_rad),  np.cos(angle_rad)]
-    ])
-
-    # Generate points on a unit circle
-    t = np.linspace(0, 2 * np.pi, 100)
-    xy_unit = np.array([np.cos(t), np.sin(t)])
-
-    # Scale by radii
-    xy_scaled = np.diag(radii) @ xy_unit
-
-    # Rotate and translate
-    xy_rotated = rotation_matrix @ xy_scaled
-    x_ellipse = xy_rotated[0, :] + center[0]
-    y_ellipse = xy_rotated[1, :] + center[1]
-
-    # Plot
-    plt.figure(figsize=(8, 8))
-    plt.scatter(data[:, 0], data[:, 1], s=20, alpha=0.6, label='Filtered End-Poses')
-    plt.plot(center[0], center[1], 'ko', markersize=8, label='Mean Center')
-    plt.plot(x_ellipse, y_ellipse, 'r-', linewidth=2, label=f'{conf_level*100:.1f}% Uncertainty Ellipse')
-
-    # Plot Principal Axes (scaled by the radii for visualization)
-    for i in range(k):
-        v = eigenvectors[:, i] * radii[i]
-        plt.plot([center[0], center[0] + v[0]], [center[1], center[1] + v[1]],
-                 'g--' if i == 0 else 'm--', linewidth=1.5,
-                 label=f'PC {i+1} Axis' if i == 0 else None)
-
-    plt.title(f'PCA and Uncertainty Ellipse ({conf_level*100:.1f}% Confidence)')
-    plt.xlabel(column_names[0])
-    plt.ylabel(column_names[1])
-    plt.axis('equal')
+    # 6. Plotting (Histogram and PDF)
+    plt.figure(figsize=(8, 5))
+    plt.hist(data, bins=num_bins, density=True, alpha=0.6, label=f'Data: {col_name}')
+    xmin, xmax = plt.xlim()
+    x = np.linspace(xmin, xmax, 100)
+    pdf = norm.pdf(x, mu, std)
+    plt.plot(x, pdf, 'r-', linewidth=2, label='Fitted Gaussian PDF')
+    plt.title(f'Gaussian Fit ($H_0$: {is_gaussian}) & $\chi^2$ Test for {direction} Direction ({col_name}-Axis)')
+    plt.xlabel(col_name)
+    plt.ylabel('Density')
+    plt.legend()
     plt.grid(True, linestyle='--', alpha=0.6)
-    plt.legend(loc='lower right')
-    plt.savefig(f'figures/{filename}', dpi=300)
+    plt.savefig(f'../figures/chi_square_{direction}_{col_name}.png', dpi=300)
     plt.close()
 
-    # Return covariance matrix for comparison with model uncertainty
-    return cov_matrix, center
 
-# ----------------------------------------------------
-#               EXAMPLE USAGE (Removed/Modified)
-# ----------------------------------------------------
-# (The original example usage is removed to keep the file as a module of functions.)
+
+def plot_ellipsoid_pca_fit(df, df_name, sigma_multiplier=2, x_col='X', y_col='Y', z_col='Theta'):
+    """
+    Performs PCA on 3D data (X, Y, Theta) to define a best-fit ellipsoid.
+    Plots a 3D view of the ellipsoid (no heatmap) and the original data points
+    colored by their inclusion status, showing the principal axes as lines.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the data.
+        df_name (str): Name for the dataset, used in titles and filenames.
+        sigma_multiplier (int/float): Multiplier for the standard deviation
+                                      to define the size of the ellipsoid.
+        x_col, y_col, z_col (str): Column names for the 3D data.
+    """
+
+    # --- 1. Data Preparation and PCA ---
+
+    # Extract the data matrix and center the data
+    X_data = df[[x_col, y_col, z_col]].values
+    data_mean = X_data.mean(axis=0)
+    X_centered = X_data - data_mean
+
+    # Initialize and run PCA
+    pca = PCA(n_components=3)
+    pca.fit(X_centered)
+
+    # Extract components and variances
+    v1, v2, v3 = pca.components_
+
+    # Calculate semi-axis lengths (A, B, C)
+    A = sigma_multiplier * np.sqrt(pca.explained_variance_[0])
+    B = sigma_multiplier * np.sqrt(pca.explained_variance_[1])
+    C = sigma_multiplier * np.sqrt(pca.explained_variance_[2])
+
+    # The final vectors a, b, and c for the ellipsoid
+    a_vec = A * v1
+    b_vec = B * v2
+    c_vec = C * v3
+
+    # Print results (optional)
+    print("--- PCA Results for Ellipsoid ---")
+    print(f"Center Point (Mean): {data_mean}")
+    print(f"Lengths ({sigma_multiplier}-sigma): A={A:.2f}, B={B:.2f}, C={C:.2f}")
+
+    # --- 2. Ellipsoid Surface Generation and Transformation ---
+
+    # Define the Rotation Matrix (R) using the normalized principal components
+    R = np.vstack([v1, v2, v3]).T
+
+    # Generate Ellipsoid Points in Canonical (Axis-Aligned) Frame
+    u = np.linspace(0, 2 * np.pi, 50)
+    v = np.linspace(0, np.pi, 50)
+    U, V = np.meshgrid(u, v)
+
+    X_prime = A * np.cos(U) * np.sin(V)
+    Y_prime = B * np.sin(U) * np.sin(V)
+    Z_prime = C * np.cos(V)
+
+    P_prime = np.array([X_prime.flatten(), Y_prime.flatten(), Z_prime.flatten()])
+
+    # Rotate and Translate to World Frame
+    P_world_centered = R @ P_prime
+    P_world = P_world_centered + data_mean[:, np.newaxis]
+
+    # Extract World Coordinates
+    X_world = P_world[0, :].reshape(X_prime.shape)
+    Y_world = P_world[1, :].reshape(Y_prime.shape)
+    Theta_world = P_world[2, :].reshape(Z_prime.shape)
+
+    # --- 3. Inclusion Check ---
+
+    X_prime_data = R.T @ X_centered.T
+    Xp_data = X_prime_data.T[:, 0]
+    Yp_data = X_prime_data.T[:, 1]
+    Zp_data = X_prime_data.T[:, 2]
+
+    # Check if inside ellipsoid: (Xp/A)^2 + (Yp/B)^2 + (Zp/C)^2 <= 1
+    D_sq = (Xp_data / A)**2 + (Yp_data / B)**2 + (Zp_data / C)**2
+    is_inside = D_sq <= 1
+    inclusion_status = is_inside.astype(int) # 0=Outside, 1=Inside
+
+    # Custom colormap for binary status: 0 (Outside) = Red, 1 (Inside) = Blue
+    cmap_binary = ListedColormap(['red', 'blue'])
+
+    # Create custom legend handles for the binary colors
+    custom_lines = [
+        Line2D([0], [0], color='red', marker='x', linestyle='None', markersize=8),
+        Line2D([0], [0], color='blue', marker='x', linestyle='None', markersize=8)
+    ]
+
+    # =========================================================================
+    # --- 4. Plotting (3D View ONLY) ---
+    # =========================================================================
+
+    fig3d = plt.figure(figsize=(8, 8))
+    ax3d = fig3d.add_subplot(111, projection='3d')
+
+    # a. Plot Ellipsoid Surface
+    ax3d.plot_surface(
+        X_world, Y_world, Theta_world,
+        color='blue', alpha=0.1, linewidth=0.5, antialiased=False
+    )
+
+    # b. Plot Data Points (colored by inclusion status)
+    ax3d.scatter(
+        df[x_col], df[y_col], df[z_col],
+        c=inclusion_status,
+        cmap=cmap_binary,
+        marker='x',
+        s=30,
+        alpha=0.8
+    )
+
+    # c. Plot Center and Principal Axes (as lines without arrowheads)
+
+    # Center point
+    ax3d.plot(data_mean[0:1], data_mean[1:2], data_mean[2:3], 'ko', markersize=8, label='Center')
+
+    # Principal Axes (Lines drawn from -vector to +vector, passing through the mean)
+
+    # Axis 1 (A) - Major Axis (Red)
+    ax3d.plot(
+        [data_mean[0], data_mean[0] + a_vec[0]], # X coordinates
+        [data_mean[1], data_mean[1] + a_vec[1]], # Y coordinates
+        [data_mean[2], data_mean[2] + a_vec[2]], # Z coordinates
+        color='red', linewidth=2
+    )
+
+    # Axis 2 (B) - Mid Axis (Green)
+    ax3d.plot(
+        [data_mean[0] , data_mean[0] + b_vec[0]],
+        [data_mean[1], data_mean[1] + b_vec[1]],
+        [data_mean[2], data_mean[2] + b_vec[2]],
+        color='green', linewidth=2
+    )
+
+    # Axis 3 (C) - Minor Axis (Black)
+    ax3d.plot(
+        [data_mean[0] , data_mean[0] + c_vec[0]],
+        [data_mean[1], data_mean[1] + c_vec[1]],
+        [data_mean[2], data_mean[2] + c_vec[2]],
+        color='black', linewidth=2
+    )
+
+    # d. Set Labels, Title, and Save
+    ax3d.set_xlabel(f'{x_col} (cm)')
+    ax3d.set_ylabel(f'{y_col} (cm)')
+    ax3d.set_zlabel(f'{z_col} (rad)')
+    ax3d.set_title(f'3D PCA-Fitted Ellipsoid for {df_name} Direction ({sigma_multiplier} $\sigma$ PC length)')
+
+    # Create custom legend for principal axes for the 3D plot
+    custom_axis_lines = [
+        Line2D([0], [0], color='red', linestyle='-', linewidth=2),
+        Line2D([0], [0], color='green', linestyle='-', linewidth=2),
+        Line2D([0], [0], color='black', linestyle='-', linewidth=2)
+    ]
+    ax3d.legend(
+        custom_lines + custom_axis_lines,
+        ['Outside Ellipsoid', 'Inside Ellipsoid', 'PC 1', 'PC 2', 'PC 3'],
+        loc='upper right'
+    )
+
+    plt.savefig(f'../figures/{df_name}_ellipsoid_3d_view.png')
+    plt.close(fig3d)
+
+if __name__ == '__main__':
+    pass
