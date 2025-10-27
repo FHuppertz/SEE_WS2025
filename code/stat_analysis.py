@@ -124,88 +124,6 @@ def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_h
     plt.close()
 
 
-
-def plot_2d_pca_and_ellipse(df, column_names=['X', 'Y'], conf_level=0.95, filename='pca_ellipse_plot.png'):
-    """
-    Performs PCA on 2D data, plots the data in the new space, and adds the
-    confidence ellipse (the statistical uncertainty).
-
-    Args:
-        df (pd.DataFrame): Input DataFrame with X and Y columns.
-        column_names (list): The two column names to use (e.g., ['X', 'Y']).
-        conf_level (float): Confidence level for the ellipse (e.g., 0.95 for 95%).
-    """
-    if len(column_names) != 2:
-        raise ValueError("Must provide exactly two column names for 2D analysis.")
-
-    data = df[column_names].values
-    center = np.mean(data, axis=0) # Mean vector (\mu)
-    cov_matrix = np.cov(data, rowvar=False) # Covariance matrix (\Sigma)
-    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix) # PCA: Eigen-decomposition
-
-    # Sort in descending order (largest eigenvalue first)
-    order = eigenvalues.argsort()[::-1]
-    eigenvalues = eigenvalues[order]
-    eigenvectors = eigenvectors[:, order]
-
-    k = 2 # Degrees of freedom for Chi-squared distribution (2D)
-    c = chi2.ppf(conf_level, k) # Critical Chi-square value
-
-    # Radii: sqrt(c * eigenvalue)
-    radii = np.sqrt(c * eigenvalues)
-
-    print("\n--- 2D PCA and Statistical Uncertainty ---")
-    print(f"Mean (X, Y):\n{center}")
-    print(f"Covariance Matrix (Sigma):\n{cov_matrix}")
-    print(f"Principal Components (Eigenvectors):\n{eigenvectors}")
-    print(f"Eigenvalues (Variance along PC):\n{eigenvalues}")
-    print(f"Ellipse Radii ({conf_level*100:.0f}%):\n{radii}")
-    print(f"Angle of largest PC: {np.degrees(np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])):.2f} degrees")
-
-    # Angle of rotation for the ellipse (angle of the first principal component)
-    angle_rad = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
-    rotation_matrix = np.array([
-        [np.cos(angle_rad), -np.sin(angle_rad)],
-        [np.sin(angle_rad),  np.cos(angle_rad)]
-    ])
-
-    # Generate points on a unit circle
-    t = np.linspace(0, 2 * np.pi, 100)
-    xy_unit = np.array([np.cos(t), np.sin(t)])
-
-    # Scale by radii
-    xy_scaled = np.diag(radii) @ xy_unit
-
-    # Rotate and translate
-    xy_rotated = rotation_matrix @ xy_scaled
-    x_ellipse = xy_rotated[0, :] + center[0]
-    y_ellipse = xy_rotated[1, :] + center[1]
-
-    # Plot
-    plt.figure(figsize=(8, 8))
-    plt.scatter(data[:, 0], data[:, 1], s=20, alpha=0.6, label='Filtered End-Poses')
-    plt.plot(center[0], center[1], 'ko', markersize=8, label='Mean Center')
-    plt.plot(x_ellipse, y_ellipse, 'r-', linewidth=2, label=f'{conf_level*100:.1f}% Uncertainty Ellipse')
-
-    # Plot Principal Axes (scaled by the radii for visualization)
-    for i in range(k):
-        v = eigenvectors[:, i] * radii[i]
-        plt.plot([center[0], center[0] + v[0]], [center[1], center[1] + v[1]],
-                 'g--' if i == 0 else 'm--', linewidth=1.5,
-                 label=f'PC {i+1} Axis' if i == 0 else None)
-
-    plt.title(f'PCA and Uncertainty Ellipse ({conf_level*100:.1f}% Confidence)')
-    plt.xlabel(column_names[0])
-    plt.ylabel(column_names[1])
-    plt.axis('equal')
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.legend(loc='lower right')
-    plt.savefig(f'../figures/{filename}', dpi=300)
-    plt.close()
-
-    # Return covariance matrix for comparison with model uncertainty
-    return cov_matrix, center
-
 def plot_ellipsoid_pca_fit(df, df_name, sigma_multiplier=2, x_col='X', y_col='Y', z_col='Theta'):
     """
     Performs PCA on 3D data (X, Y, Theta) to define a best-fit ellipsoid.
@@ -300,7 +218,7 @@ def plot_ellipsoid_pca_fit(df, df_name, sigma_multiplier=2, x_col='X', y_col='Y'
 
     # --- 4. Plotting ---
 
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(10, 6))
 
     # --- Plot 1: Ellipsoid Heatmap (Depth) ---
     im = ax.pcolormesh(Y_world, X_world, C_data, cmap='viridis', shading='gouraud', alpha=0.6)
@@ -352,7 +270,7 @@ def plot_ellipsoid_pca_fit(df, df_name, sigma_multiplier=2, x_col='X', y_col='Y'
     ax.set_ylabel(f'{x_col}-axis (Data)')
     ax.set_title(f'PCA-Fitted Ellipsoid Projection for {df_name} Direction ({sigma_multiplier}-Sigma)')
     ax.grid(True, linestyle='--', alpha=0.5)
-    ax.set_aspect('equal', adjustable='box')
+    ax.axis('equal')
     plt.savefig(f'../figures/{df_name}_ellipsoid_projection_inclusion.png')
     plt.close(fig) # Close the figure to free up memory
 
