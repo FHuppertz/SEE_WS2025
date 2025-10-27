@@ -1,9 +1,7 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import chi2, norm
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 from matplotlib.colors import ListedColormap
 from matplotlib.lines import Line2D
 
@@ -124,21 +122,23 @@ def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_h
     plt.close()
 
 
+
 def plot_ellipsoid_pca_fit(df, df_name, sigma_multiplier=2, x_col='X', y_col='Y', z_col='Theta'):
     """
     Performs PCA on 3D data (X, Y, Theta) to define a best-fit ellipsoid.
-    Plots the 2D projection of the ellipsoid onto the Y-X plane (heatmap for depth)
-    and plots the original data points colored by their inclusion status.
-    
+    Plots a 3D view of the ellipsoid (no heatmap) and the original data points
+    colored by their inclusion status, showing the principal axes as lines.
+
     Args:
         df (pd.DataFrame): DataFrame containing the data.
-        sigma_multiplier (int/float): Multiplier for the standard deviation 
-                                      to define the size of the ellipsoid (e.g., 3 for ~99.7% confidence).
+        df_name (str): Name for the dataset, used in titles and filenames.
+        sigma_multiplier (int/float): Multiplier for the standard deviation
+                                      to define the size of the ellipsoid.
         x_col, y_col, z_col (str): Column names for the 3D data.
     """
 
     # --- 1. Data Preparation and PCA ---
-    
+
     # Extract the data matrix and center the data
     X_data = df[[x_col, y_col, z_col]].values
     data_mean = X_data.mean(axis=0)
@@ -149,7 +149,7 @@ def plot_ellipsoid_pca_fit(df, df_name, sigma_multiplier=2, x_col='X', y_col='Y'
     pca.fit(X_centered)
 
     # Extract components and variances
-    v1, v2, v3 = pca.components_ 
+    v1, v2, v3 = pca.components_
 
     # Calculate semi-axis lengths (A, B, C)
     A = sigma_multiplier * np.sqrt(pca.explained_variance_[0])
@@ -169,7 +169,7 @@ def plot_ellipsoid_pca_fit(df, df_name, sigma_multiplier=2, x_col='X', y_col='Y'
     # --- 2. Ellipsoid Surface Generation and Transformation ---
 
     # Define the Rotation Matrix (R) using the normalized principal components
-    R = np.vstack([v1, v2, v3]).T 
+    R = np.vstack([v1, v2, v3]).T
 
     # Generate Ellipsoid Points in Canonical (Axis-Aligned) Frame
     u = np.linspace(0, 2 * np.pi, 50)
@@ -186,93 +186,106 @@ def plot_ellipsoid_pca_fit(df, df_name, sigma_multiplier=2, x_col='X', y_col='Y'
     P_world_centered = R @ P_prime
     P_world = P_world_centered + data_mean[:, np.newaxis]
 
-    # Extract World Coordinates (P_world[0]=X, P_world[1]=Y, P_world[2]=Theta)
+    # Extract World Coordinates
     X_world = P_world[0, :].reshape(X_prime.shape)
     Y_world = P_world[1, :].reshape(Y_prime.shape)
-    # The depth information is the magnitude of the Z_prime component (along the c-axis)
-    C_data = np.abs(Z_prime)
+    Theta_world = P_world[2, :].reshape(Z_prime.shape)
 
-    # --- 3. Data Inclusion Check (Mahalanobis Distance) ---
+    # --- 3. Inclusion Check ---
 
-    # Transform the centered data points to the Canonical (PCA) Frame
-    X_prime_data = X_centered @ R # R transforms canonical -> world; R.T transforms world -> canonical. We need R.T
+    X_prime_data = R.T @ X_centered.T
+    Xp_data = X_prime_data.T[:, 0]
+    Yp_data = X_prime_data.T[:, 1]
+    Zp_data = X_prime_data.T[:, 2]
 
-    # Correction: R is composed of column vectors (v1, v2, v3). 
-    # To transform X_centered (World Frame) to X_prime_data (Canonical Frame), we use R inverse, which is R.T.
-    # Since numpy's components_ are rows, R is built as [v1.T, v2.T, v3.T].T = [v1 | v2 | v3].
-    # Transformation is: X_prime = X_centered @ R.T (or X_centered @ np.linalg.inv(R))
-    # Note: R is built as np.vstack([v1, v2, v3]).T, so X_prime_data = X_centered @ np.linalg.inv(R) is the mathematically rigorous way, 
-    # but since R is orthogonal, np.linalg.inv(R) == R.T. Let's use R.T for safety with array shapes.
-    X_prime_data = X_centered @ R.T
-
-    Xp_data = X_prime_data[:, 0]
-    Yp_data = X_prime_data[:, 1]
-    Zp_data = X_prime_data[:, 2]
-
-    # Calculate Mahalanobis distance squared (D^2)
+    # Check if inside ellipsoid: (Xp/A)^2 + (Yp/B)^2 + (Zp/C)^2 <= 1
     D_sq = (Xp_data / A)**2 + (Yp_data / B)**2 + (Zp_data / C)**2
-
-    # Determine inclusion status (True for inside, False for outside)
     is_inside = D_sq <= 1
     inclusion_status = is_inside.astype(int) # 0=Outside, 1=Inside
 
-    # --- 4. Plotting ---
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    # --- Plot 1: Ellipsoid Heatmap (Depth) ---
-    im = ax.pcolormesh(Y_world, X_world, C_data, cmap='viridis', shading='gouraud', alpha=0.6)
-    
-    # Add a color bar for the ellipsoid depth
-    fig.colorbar(im, ax=ax, label=f'Ellipsoid Depth along $z\'$ (Max $C={C:.2f}$)', pad=0.1)
-
-
-    # --- Plot 2: Scatter Plot (Inclusion Status) ---
     # Custom colormap for binary status: 0 (Outside) = Red, 1 (Inside) = Blue
-    cmap_binary = ListedColormap(['red', 'blue']) 
-
-    # Plotting Y vs X and coloring by inclusion_status
-    scatter = ax.scatter(
-        df[y_col], df[x_col],             # X-axis is Y, Y-axis is X (as per your custom frame)
-        c=inclusion_status,               # Scalar data for coloring (0 or 1)
-        cmap=cmap_binary,                 # Use the binary colormap
-        marker='x',
-        s=30,
-        alpha=0.8
-    )
+    cmap_binary = ListedColormap(['red', 'blue'])
 
     # Create custom legend handles for the binary colors
     custom_lines = [
         Line2D([0], [0], color='red', marker='x', linestyle='None', markersize=8),
         Line2D([0], [0], color='blue', marker='x', linestyle='None', markersize=8)
     ]
-    
-    # --- Plot 3: Center and Principal Axes ---
-    
-    # Add the center point (Y_mean vs X_mean)
-    ax.plot(data_mean[1], data_mean[0], 'ko', markersize=8)
 
-    # Add the principal axes (vectors a and b) projected onto the Y-X plane
-    ax.quiver(data_mean[1], data_mean[0], a_vec[1], a_vec[0], 
-            color='black', scale_units='xy', scale=1, width=0.005)
-    ax.quiver(data_mean[1], data_mean[0], b_vec[1], b_vec[0], 
-            color='darkgray', scale_units='xy', scale=1, width=0.005)
+    # =========================================================================
+    # --- 4. Plotting (3D View ONLY) ---
+    # =========================================================================
 
-    # Final Legend
-    ax.legend(
-        custom_lines + [Line2D([0], [0], color='black', marker='o', linestyle='None', markersize=8),
-                        Line2D([0], [0], color='black', linestyle='-', linewidth=2)],
-        ['Outside Ellipsoid', 'Inside Ellipsoid', 'Ellipsoid Center', 'Principal Axes'],
-        loc='best'
+    fig3d = plt.figure(figsize=(8, 8))
+    ax3d = fig3d.add_subplot(111, projection='3d')
+
+    # a. Plot Ellipsoid Surface
+    ax3d.plot_surface(
+        X_world, Y_world, Theta_world,
+        color='blue', alpha=0.1, linewidth=0.5, antialiased=False
     )
-    
-    ax.set_xlabel(f'{y_col}-axis (Data)')
-    ax.set_ylabel(f'{x_col}-axis (Data)')
-    ax.set_title(f'PCA-Fitted Ellipsoid Projection for {df_name} Direction ({sigma_multiplier}-Sigma)')
-    ax.grid(True, linestyle='--', alpha=0.5)
-    ax.axis('equal')
-    plt.savefig(f'../figures/{df_name}_ellipsoid_projection_inclusion.png')
-    plt.close(fig) # Close the figure to free up memory
+
+    # b. Plot Data Points (colored by inclusion status)
+    ax3d.scatter(
+        df[x_col], df[y_col], df[z_col],
+        c=inclusion_status,
+        cmap=cmap_binary,
+        marker='x',
+        s=30,
+        alpha=0.8
+    )
+
+    # c. Plot Center and Principal Axes (as lines without arrowheads)
+
+    # Center point
+    ax3d.plot(data_mean[0:1], data_mean[1:2], data_mean[2:3], 'ko', markersize=8, label='Center')
+
+    # Principal Axes (Lines drawn from -vector to +vector, passing through the mean)
+
+    # Axis 1 (A) - Major Axis (Red)
+    ax3d.plot(
+        [data_mean[0], data_mean[0] + a_vec[0]], # X coordinates
+        [data_mean[1], data_mean[1] + a_vec[1]], # Y coordinates
+        [data_mean[2], data_mean[2] + a_vec[2]], # Z coordinates
+        color='red', linewidth=2
+    )
+
+    # Axis 2 (B) - Mid Axis (Green)
+    ax3d.plot(
+        [data_mean[0] , data_mean[0] + b_vec[0]],
+        [data_mean[1], data_mean[1] + b_vec[1]],
+        [data_mean[2], data_mean[2] + b_vec[2]],
+        color='green', linewidth=2
+    )
+
+    # Axis 3 (C) - Minor Axis (Black)
+    ax3d.plot(
+        [data_mean[0] , data_mean[0] + c_vec[0]],
+        [data_mean[1], data_mean[1] + c_vec[1]],
+        [data_mean[2], data_mean[2] + c_vec[2]],
+        color='black', linewidth=2
+    )
+
+    # d. Set Labels, Title, and Save
+    ax3d.set_xlabel(f'{x_col} (cm)')
+    ax3d.set_ylabel(f'{y_col} (cm)')
+    ax3d.set_zlabel(f'{z_col} (rad)')
+    ax3d.set_title(f'3D PCA-Fitted Ellipsoid for {df_name} Direction ({sigma_multiplier} $\sigma$ PC length)')
+
+    # Create custom legend for principal axes for the 3D plot
+    custom_axis_lines = [
+        Line2D([0], [0], color='red', linestyle='-', linewidth=2),
+        Line2D([0], [0], color='green', linestyle='-', linewidth=2),
+        Line2D([0], [0], color='black', linestyle='-', linewidth=2)
+    ]
+    ax3d.legend(
+        custom_lines + custom_axis_lines,
+        ['Outside Ellipsoid', 'Inside Ellipsoid', 'PC 1', 'PC 2', 'PC 3'],
+        loc='upper right'
+    )
+
+    plt.savefig(f'../figures/{df_name}_ellipsoid_3d_view.png')
+    plt.close(fig3d)
 
 if __name__ == '__main__':
     pass
