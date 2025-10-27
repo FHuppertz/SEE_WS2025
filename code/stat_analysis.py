@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import chi2
-from matplotlib.patches import Ellipse
-import matplotlib.colors as mcolors
+from scipy.stats import chi2, norm
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from matplotlib.colors import ListedColormap
+from matplotlib.lines import Line2D
 
 # --- Helper Functions from Original Code ---
 
@@ -43,7 +45,7 @@ def chebyshev_outlier_removal(df, column_names, threshold_sigma=2.0):
     return df_filtered, outliers_df
 
 
-def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_histogram.png'):
+def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_histogram.png', direction='Left'):
     """
     Performs the Chi-square goodness-of-fit test for a 1D Gaussian distribution
     and plots the histogram with the fitted Gaussian PDF.
@@ -58,7 +60,6 @@ def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_h
 
     # 1. Calculate Observed Frequencies (O_i) and Bin Edges
     O_i, bin_edges, _ = plt.hist(data, bins=num_bins, density=False, label='Observed Data')
-    plt.close() # Close the temporary plot
 
     # 2. Calculate Expected Frequencies (E_i)
     # The probability of falling in bin i is P_i = CDF(upper_edge) - CDF(lower_edge)
@@ -95,22 +96,7 @@ def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_h
     critical_value = chi2.ppf(1 - alpha, df)
     p_value = 1 - chi2.cdf(chi2_stat, df)
 
-    # 5. Plotting (Histogram and PDF)
-    plt.figure(figsize=(8, 5))
-    plt.hist(data, bins=num_bins, density=True, alpha=0.6, label=f'Data: {col_name}')
-    xmin, xmax = plt.xlim()
-    x = np.linspace(xmin, xmax, 100)
-    pdf = norm.pdf(x, mu, std)
-    plt.plot(x, pdf, 'r-', linewidth=2, label='Fitted Gaussian PDF')
-    plt.title(f'Gaussian Fit & $\chi^2$ Test for {col_name}')
-    plt.xlabel(col_name)
-    plt.ylabel('Density')
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.savefig(f'figures/{filename}_{col_name}.png', dpi=300)
-    plt.close()
-
-    # 6. Conclusion
+    # 5. Conclusion
     is_gaussian = p_value > alpha # Null hypothesis is that data is Gaussian
     result_str = "ACCEPTED (Data is likely Gaussian)" if is_gaussian else "REJECTED (Data is NOT Gaussian)"
 
@@ -122,7 +108,21 @@ def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_h
     print(f"P-value: {p_value:.4f}")
     print(f"Null Hypothesis (Data is Gaussian) is: {result_str}")
 
-    return chi2_stat, df, p_value
+    # 6. Plotting (Histogram and PDF)
+    plt.figure(figsize=(8, 5))
+    plt.hist(data, bins=num_bins, density=True, alpha=0.6, label=f'Data: {col_name}')
+    xmin, xmax = plt.xlim()
+    x = np.linspace(xmin, xmax, 100)
+    pdf = norm.pdf(x, mu, std)
+    plt.plot(x, pdf, 'r-', linewidth=2, label='Fitted Gaussian PDF')
+    plt.title(f'Gaussian Fit ($H_0$: {is_gaussian}) & $\chi^2$ Test for {direction} Direction ({col_name}-Axis)')
+    plt.xlabel(col_name)
+    plt.ylabel('Density')
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.savefig(f'../figures/chi_square_{direction}_{col_name}.png', dpi=300)
+    plt.close()
+
 
 
 def plot_2d_pca_and_ellipse(df, column_names=['X', 'Y'], conf_level=0.95, filename='pca_ellipse_plot.png'):
@@ -200,68 +200,161 @@ def plot_2d_pca_and_ellipse(df, column_names=['X', 'Y'], conf_level=0.95, filena
     plt.axis('equal')
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend(loc='lower right')
-    plt.savefig(f'figures/{filename}', dpi=300)
+    plt.savefig(f'../figures/{filename}', dpi=300)
     plt.close()
 
     # Return covariance matrix for comparison with model uncertainty
     return cov_matrix, center
 
-def plot_ellipsoid(a_vec, b_vec, c_vec):
-    # 1. Define the Ellipsoid Vectors
-    # NOTE: Replace these sample vectors with your actual vector data.
-    # The code will extract the magnitudes A, B, C.
-    # For this example, A=3, B=2, C=1.
+def plot_ellipsoid_pca_fit(df, df_name, sigma_multiplier=2, x_col='X', y_col='Y', z_col='Theta'):
+    """
+    Performs PCA on 3D data (X, Y, Theta) to define a best-fit ellipsoid.
+    Plots the 2D projection of the ellipsoid onto the Y-X plane (heatmap for depth)
+    and plots the original data points colored by their inclusion status.
+    
+    Args:
+        df (pd.DataFrame): DataFrame containing the data.
+        sigma_multiplier (int/float): Multiplier for the standard deviation 
+                                      to define the size of the ellipsoid (e.g., 3 for ~99.7% confidence).
+        x_col, y_col, z_col (str): Column names for the 3D data.
+    """
 
-    # Extract semi-axis lengths (A, B, C) from the vector magnitudes
-    A = np.linalg.norm(a_vec)
-    B = np.linalg.norm(b_vec)
-    C = np.linalg.norm(c_vec)
+    # --- 1. Data Preparation and PCA ---
+    
+    # Extract the data matrix and center the data
+    X_data = df[[x_col, y_col, z_col]].values
+    data_mean = X_data.mean(axis=0)
+    X_centered = X_data - data_mean
 
-    # 2. Create Grid and Calculate Depth
-    # Define the range for the 2D plot (plane of a and b)
-    # We use 300 points for a smooth image
-    points = 300
-    x_range = np.linspace(-A, A, points)
-    y_range = np.linspace(-B, B, points)
-    X, Y = np.meshgrid(x_range, y_range)
+    # Initialize and run PCA
+    pca = PCA(n_components=3)
+    pca.fit(X_centered)
 
-    # Calculate the fractional squared sum of the (x, y) coordinates
-    # This is the left-hand side of the projection ellipse equation: (x/A)^2 + (y/B)^2
-    frac_sum_sq = (X/A)**2 + (Y/B)**2
+    # Extract components and variances
+    v1, v2, v3 = pca.components_ 
 
-    # Initialize the depth matrix Z
-    Z = np.zeros_like(X)
+    # Calculate semi-axis lengths (A, B, C)
+    A = sigma_multiplier * np.sqrt(pca.explained_variance_[0])
+    B = sigma_multiplier * np.sqrt(pca.explained_variance_[1])
+    C = sigma_multiplier * np.sqrt(pca.explained_variance_[2])
 
-    # Find the points inside the ellipse projection (where the sum is <= 1)
-    inside = frac_sum_sq <= 1
+    # The final vectors a, b, and c for the ellipsoid
+    a_vec = A * v1
+    b_vec = B * v2
+    c_vec = C * v3
 
-    # Calculate the depth Z = C * sqrt(1 - (x/A)^2 - (y/B)^2)
-    # Use np.maximum(0, ...) to clamp tiny negative values to zero, preventing the sqrt warning.
-    depth_arg = np.maximum(0, 1 - frac_sum_sq) 
+    # Print results (optional)
+    print("--- PCA Results for Ellipsoid ---")
+    print(f"Center Point (Mean): {data_mean}")
+    print(f"Lengths ({sigma_multiplier}-sigma): A={A:.2f}, B={B:.2f}, C={C:.2f}")
 
-    Z = np.where(inside, C * np.sqrt(depth_arg), np.nan)
+    # --- 2. Ellipsoid Surface Generation and Transformation ---
 
-    # 3. Plot the Heatmap
-    plt.figure(figsize=(8, 8))
+    # Define the Rotation Matrix (R) using the normalized principal components
+    R = np.vstack([v1, v2, v3]).T 
 
-    # Use imshow to display the Z matrix as a heatmap
-    plt.imshow(Z, origin='lower', extent=[-A, A, -B, B], cmap='viridis',
-            interpolation='nearest')
+    # Generate Ellipsoid Points in Canonical (Axis-Aligned) Frame
+    u = np.linspace(0, 2 * np.pi, 50)
+    v = np.linspace(0, np.pi, 50)
+    U, V = np.meshgrid(u, v)
 
-    # Add a color bar to show the depth scale
-    cbar = plt.colorbar(label='Depth along $\\mathbf{c}$ $|z|$')
+    X_prime = A * np.cos(U) * np.sin(V)
+    Y_prime = B * np.sin(U) * np.sin(V)
+    Z_prime = C * np.cos(V)
 
-    # Set labels for the axes (aligned with vectors a and b)
-    plt.xlabel('Component along $\\mathbf{a}$ ($x$)')
-    plt.ylabel('Component along $\\mathbf{b}$ ($y$)')
-    plt.title(f'Ellipsoid Projection (A={A:.2f}, B={B:.2f}, C={C:.2f}) with Depth Heatmap')
-    # Ensure the aspect ratio is correct for the plot
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.savefig('ellipsoid_projection_heatmap.png')
+    P_prime = np.array([X_prime.flatten(), Y_prime.flatten(), Z_prime.flatten()])
+
+    # Rotate and Translate to World Frame
+    P_world_centered = R @ P_prime
+    P_world = P_world_centered + data_mean[:, np.newaxis]
+
+    # Extract World Coordinates (P_world[0]=X, P_world[1]=Y, P_world[2]=Theta)
+    X_world = P_world[0, :].reshape(X_prime.shape)
+    Y_world = P_world[1, :].reshape(Y_prime.shape)
+    # The depth information is the magnitude of the Z_prime component (along the c-axis)
+    C_data = np.abs(Z_prime)
+
+    # --- 3. Data Inclusion Check (Mahalanobis Distance) ---
+
+    # Transform the centered data points to the Canonical (PCA) Frame
+    X_prime_data = X_centered @ R # R transforms canonical -> world; R.T transforms world -> canonical. We need R.T
+
+    # Correction: R is composed of column vectors (v1, v2, v3). 
+    # To transform X_centered (World Frame) to X_prime_data (Canonical Frame), we use R inverse, which is R.T.
+    # Since numpy's components_ are rows, R is built as [v1.T, v2.T, v3.T].T = [v1 | v2 | v3].
+    # Transformation is: X_prime = X_centered @ R.T (or X_centered @ np.linalg.inv(R))
+    # Note: R is built as np.vstack([v1, v2, v3]).T, so X_prime_data = X_centered @ np.linalg.inv(R) is the mathematically rigorous way, 
+    # but since R is orthogonal, np.linalg.inv(R) == R.T. Let's use R.T for safety with array shapes.
+    X_prime_data = X_centered @ R.T
+
+    Xp_data = X_prime_data[:, 0]
+    Yp_data = X_prime_data[:, 1]
+    Zp_data = X_prime_data[:, 2]
+
+    # Calculate Mahalanobis distance squared (D^2)
+    D_sq = (Xp_data / A)**2 + (Yp_data / B)**2 + (Zp_data / C)**2
+
+    # Determine inclusion status (True for inside, False for outside)
+    is_inside = D_sq <= 1
+    inclusion_status = is_inside.astype(int) # 0=Outside, 1=Inside
+
+    # --- 4. Plotting ---
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # --- Plot 1: Ellipsoid Heatmap (Depth) ---
+    im = ax.pcolormesh(Y_world, X_world, C_data, cmap='viridis', shading='gouraud', alpha=0.6)
+    
+    # Add a color bar for the ellipsoid depth
+    fig.colorbar(im, ax=ax, label=f'Ellipsoid Depth along $z\'$ (Max $C={C:.2f}$)', pad=0.1)
+
+
+    # --- Plot 2: Scatter Plot (Inclusion Status) ---
+    # Custom colormap for binary status: 0 (Outside) = Red, 1 (Inside) = Blue
+    cmap_binary = ListedColormap(['red', 'blue']) 
+
+    # Plotting Y vs X and coloring by inclusion_status
+    scatter = ax.scatter(
+        df[y_col], df[x_col],             # X-axis is Y, Y-axis is X (as per your custom frame)
+        c=inclusion_status,               # Scalar data for coloring (0 or 1)
+        cmap=cmap_binary,                 # Use the binary colormap
+        marker='x',
+        s=30,
+        alpha=0.8
+    )
+
+    # Create custom legend handles for the binary colors
+    custom_lines = [
+        Line2D([0], [0], color='red', marker='x', linestyle='None', markersize=8),
+        Line2D([0], [0], color='blue', marker='x', linestyle='None', markersize=8)
+    ]
+    
+    # --- Plot 3: Center and Principal Axes ---
+    
+    # Add the center point (Y_mean vs X_mean)
+    ax.plot(data_mean[1], data_mean[0], 'ko', markersize=8)
+
+    # Add the principal axes (vectors a and b) projected onto the Y-X plane
+    ax.quiver(data_mean[1], data_mean[0], a_vec[1], a_vec[0], 
+            color='black', scale_units='xy', scale=1, width=0.005)
+    ax.quiver(data_mean[1], data_mean[0], b_vec[1], b_vec[0], 
+            color='darkgray', scale_units='xy', scale=1, width=0.005)
+
+    # Final Legend
+    ax.legend(
+        custom_lines + [Line2D([0], [0], color='black', marker='o', linestyle='None', markersize=8),
+                        Line2D([0], [0], color='black', linestyle='-', linewidth=2)],
+        ['Outside Ellipsoid', 'Inside Ellipsoid', 'Ellipsoid Center', 'Principal Axes'],
+        loc='best'
+    )
+    
+    ax.set_xlabel(f'{y_col}-axis (Data)')
+    ax.set_ylabel(f'{x_col}-axis (Data)')
+    ax.set_title(f'PCA-Fitted Ellipsoid Projection for {df_name} Direction ({sigma_multiplier}-Sigma)')
+    ax.grid(True, linestyle='--', alpha=0.5)
+    ax.set_aspect('equal', adjustable='box')
+    plt.savefig(f'../figures/{df_name}_ellipsoid_projection_inclusion.png')
+    plt.close(fig) # Close the figure to free up memory
 
 if __name__ == '__main__':
-    a_vec = np.array([3, 3, 0])
-    b_vec = np.array([-1, 1, 0])
-    c_vec = np.array([0, 0, 1])
-
-    plot_ellipsoid(a_vec, b_vec, c_vec)
+    pass
