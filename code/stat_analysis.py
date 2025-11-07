@@ -43,83 +43,71 @@ def chebyshev_outlier_removal(df, column_names, threshold_sigma=2.0):
     return df_filtered, outliers_df
 
 
-def chi_square_gaussian_test(data, col_name, num_bins=10, filename='chi_square_histogram.png', direction='Left'):
+def chi_square_gaussian_test(data, col_name, num_bins=10, direction='Left', alpha=0.05):
     """
     Performs the Chi-square goodness-of-fit test for a 1D Gaussian distribution
     and plots the histogram with the fitted Gaussian PDF.
 
-    Args:
-        data (np.array): 1D array of data points.
-        col_name (str): Name of the data column for plotting.
-        num_bins (int): Number of bins for the histogram and test.
+    Returns:
+        dict: Containing Gaussian fit parameters, Chi-square statistic, p-value,
+              degrees of freedom, and Gaussian acceptance status.
     """
     mu, std = norm.fit(data)
     n = len(data)
 
-    # 1. Calculate Observed Frequencies (O_i) and Bin Edges
+    # 1. Observed frequencies (O_i)
     O_i, bin_edges, _ = plt.hist(data, bins=num_bins, density=False, label='Observed Data')
+    plt.close()
 
-    # 2. Calculate Expected Frequencies (E_i)
-    # The probability of falling in bin i is P_i = CDF(upper_edge) - CDF(lower_edge)
+    # 2. Expected frequencies (E_i)
     P_i = norm.cdf(bin_edges[1:], loc=mu, scale=std) - norm.cdf(bin_edges[:-1], loc=mu, scale=std)
     E_i = n * P_i
 
-    # Handle bins with very low expected frequency (rule of thumb: E_i >= 5)
-    # Combine the last bins until the criterion is met.
-    # Note: For simplicity and robustness with small datasets, we'll proceed
-    # with the standard bins, but a warning is warranted if E_i is small.
-
-    # 3. Calculate Chi-square statistic
-    # Exclude bins where E_i is zero to avoid division by zero (or combine bins)
     valid_bins = E_i > 0
     O_i_valid = O_i[valid_bins]
     E_i_valid = E_i[valid_bins]
 
     if len(E_i_valid) < 3:
-        print(f"\n[WARNING] Not enough valid bins for Chi-square test on '{col_name}'. Skipping.")
-        return None, None, None
+        print(f"[WARNING] Not enough valid bins for Chi-square test on '{col_name}'. Skipping.")
+        return None
 
-    chi2_stat = np.sum((O_i_valid - E_i_valid)**2 / E_i_valid)
+    chi2_stat = np.sum((O_i_valid - E_i_valid) ** 2 / E_i_valid)
+    df = len(E_i_valid) - 2 - 1  # k - p - 1, where p=2 (mean, std)
 
-    # Degrees of freedom: k - p - 1, where k = number of valid bins, p = 2 (for mu and sigma)
-    # The degree of freedom is reduced by one for each estimated parameter.
-    df = len(E_i_valid) - 2 - 1
-
-    # 4. Critical Value and p-value
     if df < 1:
-        print(f"\n[WARNING] Degrees of freedom for '{col_name}' is {df}. Skipping test.")
-        return None, None, None
+        print(f"[WARNING] Degrees of freedom for '{col_name}' is {df}. Skipping test.")
+        return None
 
-    alpha = 0.05
     critical_value = chi2.ppf(1 - alpha, df)
     p_value = 1 - chi2.cdf(chi2_stat, df)
+    is_gaussian = p_value > alpha
+    result_str = "Accepted" if is_gaussian else "Rejected"
 
-    # 5. Conclusion
-    is_gaussian = p_value > alpha # Null hypothesis is that data is Gaussian
-    result_str = "ACCEPTED (Data is likely Gaussian)" if is_gaussian else "REJECTED (Data is NOT Gaussian)"
-
-    print(f"\n--- Chi-square Test for {col_name} ---")
-    print(f"Fitted Parameters: Mean={mu:.4f}, Std Dev={std:.4f}")
-    print(f"Calculated Chi^2 Statistic: {chi2_stat:.4f}")
-    print(f"Degrees of Freedom: {df}")
-    print(f"Critical Value (\u03b1=0.05): {critical_value:.4f}")
-    print(f"P-value: {p_value:.4f}")
-    print(f"Null Hypothesis (Data is Gaussian) is: {result_str}")
-
-    # 6. Plotting (Histogram and PDF)
+    # 3. Plot (save figure)
     plt.figure(figsize=(8, 5))
     plt.hist(data, bins=num_bins, density=True, alpha=0.6, label=f'Data: {col_name}')
-    xmin, xmax = plt.xlim()
-    x = np.linspace(xmin, xmax, 100)
+    x = np.linspace(min(data), max(data), 200)
     pdf = norm.pdf(x, mu, std)
     plt.plot(x, pdf, 'r-', linewidth=2, label='Fitted Gaussian PDF')
-    plt.title(f'Gaussian Fit ($H_0$: {is_gaussian}) & $\chi^2$ Test for {direction} Direction ({col_name}-Axis)')
+    plt.title(f'Gaussian Fit & χ² Test for {direction} ({col_name}-Axis)\nH₀: Data is Gaussian → {result_str}')
     plt.xlabel(col_name)
     plt.ylabel('Density')
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.savefig(f'../figures/chi_square_{direction}_{col_name}.png', dpi=300)
     plt.close()
+
+    # 4. Return a summary dictionary
+    return {
+        "Direction": direction,
+        "Axis": col_name,
+        "Mean": mu,
+        "StdDev": std,
+        "Chi2_Stat": chi2_stat,
+        "Degrees_of_Freedom": df,
+        "p_value": p_value,
+        "Result": result_str
+    }
 
 
 

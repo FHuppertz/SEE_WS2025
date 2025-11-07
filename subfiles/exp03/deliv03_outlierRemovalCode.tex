@@ -1,0 +1,56 @@
+
+
+
+
+This function removes outliers based on \textbf{Chebyshev’s Theorem}.
+For a random variable \( X \) with mean \( \mu \) and standard deviation \( \sigma \),
+Chebyshev’s inequality states that the proportion of data points lying within \( k \) standard deviations
+from the mean is at least:
+
+\[
+P(|X - \mu| < k\sigma) \geq 1 - \frac{1}{k^2}
+\]
+
+In this case, we use \( k = 2 \), meaning at least \( 75\% \) of the data lie within:
+
+\[
+[\mu - 2\sigma, \, \mu + 2\sigma]
+\]
+
+Any data point \( x_i \) that satisfies \( |x_i - \mu| > 2\sigma \) is considered an outlier
+and removed from the dataset.
+
+\subsubsection*{Python Implementation}
+
+\begin{verbatim}
+def chebyshev_outlier_removal(df, column_names, threshold_sigma=2.0):
+    """
+    Identifies and removes outliers from the DataFrame columns based on
+    Chebyshev's Theorem (all points outside mean +/- threshold_sigma * std_dev).
+
+    Returns:
+        pd.DataFrame: A new DataFrame with outliers removed.
+        pd.DataFrame: A DataFrame containing the detected outliers.
+    """
+    df_filtered = df.copy()
+    outlier_indices = set()
+    print(f"\n--- Outlier Detection (Chebyshev {threshold_sigma}\u03c3) ---")
+
+    for col in column_names:
+        data = df[col].values
+        mu = np.mean(data)
+        sigma = np.std(data)
+        lower_bound = mu - threshold_sigma * sigma
+        upper_bound = mu + threshold_sigma * sigma
+
+        # Find indices where data is outside the range
+        col_outlier_indices = df[(df[col] < lower_bound) | (df[col] > upper_bound)].index
+        outlier_indices.update(col_outlier_indices)
+        print(f"Column '{col}': {len(col_outlier_indices)} outliers found.")
+
+    outliers_df = df.loc[list(outlier_indices)]
+    df_filtered = df.drop(list(outlier_indices))
+
+    print(f"Total points: {len(df)}. Total outliers removed: {len(outliers_df)}. Filtered points: {len(df_filtered)}")
+    return df_filtered, outliers_df
+\end{verbatim}

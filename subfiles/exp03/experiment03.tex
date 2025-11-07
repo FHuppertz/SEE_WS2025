@@ -1,20 +1,22 @@
 %!TEX root = ../report.tex
 \documentclass[../report.tex]{subfiles}
 
-\begin{document}
-\section{???}
-\label{sec:exp03}
+\usepackage{pgfplotstable}
+\usepackage{booktabs}
+\usepackage{caption}
 
-\subsection{???}
-\input{deliv03_encoder_manual.tex}
+\begin{document}
+\section{Statistical Analysis of the Exeriment Data}
+\label{sec:exp03}
+In this experiment the goal is to analyse the raw data using statistical tools. It is important to note that only precision can be analysed here, as there is no knowledge of the true value, only measurements. All data analysis was performed using the Python script Calculations.py and its dependencies, which is included in the code folder inside the delivered zip file.
 
 \subsection{Chebishov and $\chi^2$}
 \input{deliv03_chebby_chi.tex}
 
+\subsection{Statistical Parameters}
+\input{deliv03_statParams.tex}
+
 \subsection{PCA and Ellipsoid Analysis}
 \input{deliv03_ellipsoid.tex}
-
-
-
 
 \end{document}
