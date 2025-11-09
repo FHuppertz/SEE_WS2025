@@ -1,62 +1,97 @@
 import numpy as np
 import cv2 as cv
 import glob
+import os
 
-# termination criteria
-criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+CHECKERBOARD = (8, 6)
+criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 1e-6)
 
-# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-objp = np.zeros((6*8,3), np.float32)
-objp[:,:2] = np.mgrid[0:8,0:6].T.reshape(-1,2)
+# Prepare object points
+objp = np.zeros((CHECKERBOARD[0] * CHECKERBOARD[1], 3), np.float32)
+objp[:, :2] = np.mgrid[0:CHECKERBOARD[0], 0:CHECKERBOARD[1]].T.reshape(-1, 2)
 
-# Arrays to store object points and image points from all the images.
-objpoints = [] # 3d point in real world space
-imgpoints = [] # 2d points in image plane.
+objpoints, imgpoints = [], []
 
-images = glob.glob('*.jpg')
+images = sorted(glob.glob("*.jpg"))
+if not images:
+    raise FileNotFoundError("No calibration images found in current directory!")
+
+print(f"Found {len(images)} images.")
 
 for fname in images:
     img = cv.imread(fname)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-
-    # Find the chess board corners
-    ret, corners = cv.findChessboardCorners(gray, (8,6), None)
-
-    # If found, add object points, image points (after refining them)
-    if ret == True:
+    ret, corners = cv.findChessboardCorners(gray, CHECKERBOARD, None)
+    if ret:
+        corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
         objpoints.append(objp)
-
-        corners2 = cv.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
         imgpoints.append(corners2)
+        cv.drawChessboardCorners(img, CHECKERBOARD, corners2, ret)
+        cv.imshow("Corners", img)
+        cv.waitKey(100)
+cv.destroyAllWindows()
 
-        # Draw and display the corners
-        cv.drawChessboardCorners(img, (8,6), corners2, ret)
-        cv.imshow('img', img)
-        cv.waitKey(500)
+print(f"\nValid calibration images: {len(objpoints)}")
 
-# cv.destroyAllWindows()
+# ================================================================
+# Regular Calibration
+# ================================================================
+gray_shape = gray.shape[::-1]
+ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(
+    objpoints, imgpoints, gray_shape, None, None,
+    flags=cv.CALIB_RATIONAL_MODEL + cv.CALIB_THIN_PRISM_MODEL
+)
+print("\nRegular model RMS error:", ret)
 
+# Compute reprojection error
+total_error = 0
+for i in range(len(objpoints)):
+    imgpoints2, _ = cv.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
+    total_error += cv.norm(imgpoints[i], imgpoints2, cv.NORM_L2) / len(imgpoints2)
+mean_error = total_error / len(objpoints)
+print(f"Mean reprojection error: {mean_error:.5f}")
 
+# ================================================================
+# Switch to fisheye calibration if distortion still bad
+# ================================================================
+use_fisheye = ret > 1.0 or mean_error > 0.6  # empirical thresholds
+print(f"\nUsing Fisheye model? {'Yes' if use_fisheye else 'No'}")
 
-# Calibrate the camera
-ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+if use_fisheye:
+    # Fisheye calibration
+    K = np.zeros((3, 3))
+    D = np.zeros((4, 1))
+    objp_fish = [objp] * len(objpoints)
+    rms, _, _, _, _ = cv.fisheye.calibrate(
+        objp_fish,
+        imgpoints,
+        gray.shape[::-1],
+        K, D,
+        None, None,
+        cv.fisheye.CALIB_RECOMPUTE_EXTRINSIC,
+        criteria
+    )
+    print("\nFisheye RMS:", rms)
+    print("K (camera matrix):\n", K)
+    print("D (distortion coeffs):\n", D.ravel())
+    np.savez("fisheye_calibration.npz", K=K, D=D)
 
-print("Calibration successful:", ret)
-print("\nCamera matrix:\n", mtx)
-print("\nDistortion coefficients:\n", dist)
+    # Undistortion
+    img = cv.imread(images[0])
+    h, w = img.shape[:2]
+    map1, map2 = cv.fisheye.initUndistortRectifyMap(K, D, np.eye(3), K, (w, h), cv.CV_16SC2)
+    undistorted = cv.remap(img, map1, map2, interpolation=cv.INTER_LANCZOS4)
+else:
+    # Standard undistortion
+    img = cv.imread(images[0])
+    h, w = img.shape[:2]
+    newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1.0, (w, h))
+    mapx, mapy = cv.initUndistortRectifyMap(mtx, dist, None, newcameramtx, (w, h), cv.CV_32FC1)
+    undistorted = cv.remap(img, mapx, mapy, cv.INTER_LANCZOS4)
 
-# Save calibration results
-np.savez("camera_calibration_9x7.npz", mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
-
-# Optional: test undistortion on one image
-img = cv.imread(images[0])
-h, w = img.shape[:2]
-newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
-
-# Undistort
-dst = cv.undistort(img, mtx, dist, None, newcameramtx)
-
-cv.imshow('Original', img)
-cv.imshow('Undistorted', dst)
+cv.imshow("Original", img)
+cv.imshow("Undistorted", undistorted)
 cv.waitKey(0)
 cv.destroyAllWindows()
+
+print("\n✅ Undistortion complete. Inspect t")
