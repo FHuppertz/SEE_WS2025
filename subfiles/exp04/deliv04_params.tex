@@ -1,2 +1,15 @@
 % 3. A description of the intrinsic and extrinsic parameters (what do they mean?) calculated by the chosen calibration toolbox
-Fabian
+To un-distort an image, the toolbox OpenCV calculates the following intrinsic and extrinic camera parameters:
+\begin{itemize}
+	\item Intrinsic Parameters are properties of the camera and lens assembly:
+	      \begin{itemize}
+		      \item \textbf{Camera Matrix ($\mathbf{mtx}$):} A $3 \times 3$ matrix modeling the perspective projection. It transforms 3D coordinates from the camera frame to 2D pixel coordinates.
+		      \item \textbf{Distortion Coefficients ($\mathbf{dist}$):} A vector modeling the lens distortions.
+	      \end{itemize}
+
+	\item Extrinsic Parameters ($\mathbf{R}$ and $\mathbf{t}$) define the pose of the camera relative to the world coordinate system:
+	      \begin{itemize}
+		      \item \textbf{Rotation Vectors ($\mathbf{rvecs}$):} A list of vectors, representing the camera's orientation relative to the the world frame for each image.
+		      \item \textbf{Translation Vectors ($\mathbf{tvecs}$):} A list of vectors, defining the camera's position relative to world coordinate system for each image.
+	      \end{itemize}
+\end{itemize}
