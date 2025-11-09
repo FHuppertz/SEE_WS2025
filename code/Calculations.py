@@ -62,7 +62,7 @@ manual_df4['Theta'] *= np.pi/180
 encoder_df4.columns = ['Y', 'X', 'Theta']
 encoder_df4['Theta'] -= np.pi/2
 
-'''
+#'''
 # Plot the results
 plt.figure()
 
@@ -332,6 +332,7 @@ print('Finished plotting')
 
 #'''
 
+'''
 # ====================================================
 #               ASSIGNMENT 3 ANALYSIS STEPS
 # ====================================================
@@ -378,4 +379,4 @@ print(chi_summary_df)
 # Save to a single summary file (with all directions)
 chi_summary_df.to_csv('../data/chi_square_summary.csv', index=False)
 
-
+#'''
