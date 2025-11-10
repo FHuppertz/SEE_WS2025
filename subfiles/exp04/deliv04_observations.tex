@@ -1,2 +1,35 @@
 % 4. Discuss possible problems or error sources that can disturb the calibration process. Include any observation you may have made while testing the proper functioning of the camera with your laptop
-Hari
+
+\subsection{Observations}
+
+\subsubsection{Camera Functionality Check}
+The provided camera was tested to ensure proper connectivity and stability during image capture. 
+Auto-focus was \textit{(disabled as required)}, and the resolution was set to the highest possible. 
+During testing, there was no lag or focusing issues and all configurations adjustments were proper. 
+Overall, the camera responded reliably for static image acquisition.
+
+\subsubsection{Environmental Conditions}
+The calibration experiment was conducted in \textit{(indoor)} conditions under \textit{(natural lighting)}. 
+The illumination uniformity was verified to minimize shadow and glare on the checkerboard surface{(Captured the images by sitting opposite to the windows in the lab to minimize shadows)}. 
+The camera was mounted on a laptop and images were captured without any shaking or movements. 
+
+\subsubsection{Image Capture Process}
+A total of \textit{(18)} images were captured at varying orientations{(straight, diagonal, tilted clockwise, tilted anticlockwise and many more)} and distances of the checkerboard. 
+The board was moved to different positions and angles to provide sufficient geometric diversity for accurate calibration. 
+Certain frames were \textit{(discarded/retained)} due to \textit{(blur, low contrast, poor corner detection, etc.)}. 
+The process ensured that the checkerboard corners were well-detected in most images.
+
+\subsubsection{Observed Problems and Error Sources}
+Several factors that could influence calibration accuracy were identified:
+\begin{itemize}
+    \item \textit{(Lighting irregularities or glare)} affecting corner visibility.
+    \item \textit{(Motion blur or unstable mounting device)} causing corner mismatch.
+    \item \textit{(Non-planar or bent checkerboard)} introducing geometric distortion.
+    \item \textit{(Incorrect checker square size input)} affecting scaling accuracy.
+\end{itemize}
+These observations highlight the importance of stable setup, consistent lighting, and accurate checkerboard dimensions during calibration.
+
+\subsubsection{Reflections and Improvements}
+Key takeaway - From the conducted calibration, it was observed that capturing images from diverse angles and maintaining uniform lighting significantly improved corner detection accuracy and reduced overall reprojection error. 
+Future iterations could improve accuracy by \textit{(using more images, enhancing lighting uniformity, ensuring higher contrast patterns)}. 
+Overall, the process provided valuable insight into the factors influencing intrinsic and extrinsic parameter estimation reliability.
