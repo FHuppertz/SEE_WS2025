@@ -1,3 +1,97 @@
 %5. Describe the images poses used for calibration and report the found camera parameters including any error estimates (where applicable)
 %6. Sample images used for calibration
-Fabian
+Figure \ref{fig:sample_checker} shows a sample of images in various poses, which were used to find the camera parameters using the OpenCV toolbox.
+
+\begin{figure}[H]
+	\centering
+	% --- First Row (2 images) ---
+	\begin{subfigure}[t]{0.48\linewidth} % Slightly smaller width for 2x2
+		\centering
+		\includegraphics[width=\linewidth]{figures/WIN_20251106_14_05_42_Pro.jpg}
+		\caption{}
+	\end{subfigure}
+	\hfill % Space between the two subfigures
+	\begin{subfigure}[t]{0.48\linewidth} % Slightly smaller width for 2x2
+		\centering
+		\includegraphics[width=\linewidth]{figures/WIN_20251106_14_06_05_Pro.jpg}
+		\caption{}
+	\end{subfigure}
+	% --- Add vertical space for a new row ---
+	\vspace{1em} % Adds a small vertical gap between the rows
+
+	% --- Second Row (2 images) ---
+	\begin{subfigure}[b]{0.48\linewidth} % Slightly smaller width for 2x2
+		\centering
+		\includegraphics[width=\linewidth]{figures/WIN_20251106_14_06_38_Pro.jpg}
+		\caption{}
+	\end{subfigure}
+	\hfill % Space between the two subfigures
+	\begin{subfigure}[b]{0.48\linewidth} % Slightly smaller width for 2x2
+		\centering
+		\includegraphics[width=\linewidth]{figures/WIN_20251106_14_05_51_Pro.jpg}
+		\caption{}
+	\end{subfigure}
+
+	\caption{A sample of images used to find the camera parameters}
+	\label{fig:sample_checker}
+\end{figure}
+
+Figure \ref{fig:undistorted} depicts the difference between an original image and its undistorted version using the OpenCV toolbox and the found camera parameters.
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[t]{0.45\linewidth} % Changed [b] to [t]
+		\centering
+		\includegraphics[width=\linewidth]{figures/distorted.png}
+		\caption{Original distored image}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.45\linewidth} % Changed [b] to [t]
+		\centering
+		\includegraphics[width=\linewidth]{figures/undistorted.png}
+		\caption{Undistorted image using OpenCV Toolbox}
+	\end{subfigure}
+	\caption{Undistorting an image using OpenCV toolbox}
+	\label{fig:undistorted}
+\end{figure}
+
+
+
+
+The camera intrinsic and extrinsic parameters found are summarized in the following equations. In Equations \ref{eq:cam_err} through \ref{eq:T_vector},
+one can see the found parameters from the calibration process, where $\mathbf{err}$ is the error estimate, and $\mathbf{r}$ and $\mathbf{t}$ are a sample from $\mathbf{rvecs}$ and $\mathbf{tvecs}$ respectively.
+
+\begin{eqnarray}
+	\mathbf{err} &=& 0.5
+	\label{eq:cam_err} \\
+	\mathbf{mtx} &=&
+	\begin{pmatrix}
+		825.647 & 0.000   & 334.645 \\
+		0.000   & 829.003 & 220.793 \\
+		0.000   & 0.000   & 1.000
+	\end{pmatrix}
+	\label{eq:K_matrix} \\
+	\mathbf{dist} &=&
+	\begin{pmatrix}
+		0.13401  \\
+		-0.30079 \\
+		-0.01151 \\
+		0.00074  \\
+		-1.70837
+	\end{pmatrix}
+	\label{eq:D_vector} \\
+	\mathbf{r} &=&
+	\begin{pmatrix}
+		0.05167 \\
+		0.09337 \\
+		-0.00217
+	\end{pmatrix}
+	\label{eq:R_vector},
+	\mathbf{t} =
+	\begin{pmatrix}
+		-4.04096 \\
+		-2.22142 \\
+		14.77100
+	\end{pmatrix}
+	\label{eq:T_vector}
+\end{eqnarray}
