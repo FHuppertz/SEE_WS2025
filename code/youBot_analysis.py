@@ -4,16 +4,20 @@ import pandas as pd
 import os
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize
+from matplotlib import cm # Import colormap module
+
+# --- Helper Functions ---
 
 def calculate_stats(data_array, source_label):
     """
     Calculates the mean and variance for the X (index 0) and Y (index 2) components 
     of the data array, assuming the format [X_plot, Theta_color, Y_plot].
     
-    Returns a formatted string of the statistics.
+    Returns the mean and variance numpy arrays.
     """
     if data_array.size == 0:
-        return f"   {source_label} Stats: No data available."
+        # Return empty arrays for consistency when no data is available
+        return np.array([np.nan, np.nan]), np.array([np.nan, np.nan])
 
     # X data is at index 0, Y data is at index 2
     X = data_array[:, 0]
@@ -24,13 +28,6 @@ def calculate_stats(data_array, source_label):
     mean_Y = np.mean(Y)
     var_Y = np.var(Y)
     
-    stats_str = (
-        f"   {source_label} Stats:\n"
-        f"     Mean X: {mean_X:.4f}, Variance X: {var_X:.4f}\n"
-        f"     Mean Y: {mean_Y:.4f}, Variance Y: {var_Y:.4f}"
-    )
-
-    #print(stats_str)
     return np.array([mean_X, mean_Y]), np.array([var_X, var_Y])
 
 # --- Function to generate Quiver Plots (Arrows Only) ---
@@ -49,8 +46,6 @@ def plot_quiver_data(ax, data_array, color, label_prefix, scale_factor=0.1):
         V = np.sin(Theta)
 
         # Plot the arrow (quiver)
-        # scale: controls the length of the arrows. Higher scale = shorter arrows.
-        # pivot='tail': centers the base of the arrow at (X, Y)
         quiv = ax.quiver(X, Y, U, V, 
                          color=color, 
                          scale=scale_factor, 
@@ -64,11 +59,22 @@ def plot_quiver_data(ax, data_array, color, label_prefix, scale_factor=0.1):
         return quiv
     else:
         # Return a dummy scatter plot for the legend entry if no data exists
-        return ax.scatter([], [], color=color, label=f'{label_prefix} Orientation')
+        # Use alpha=0 to prevent drawing, but retain the object for the legend
+        return ax.scatter([], [], color=color, alpha=0, label=f'{label_prefix} Orientation')
 
 # --- Configuration ---
-# Define the canonical set of object keys (using lowercase for internal consistency)
-CANONICAL_OBJECTS = ['large', 'medium', 'small']
+# Define the canonical set of object *bases*
+CANONICAL_OBJECT_BASES = ['large', 'medium', 'small']
+# Define the object indices (1 through 4)
+OBJECT_INDICES = list(range(1, 5)) 
+
+# Generate the new canonical object keys (e.g., 'large1', 'large2', ...)
+CANONICAL_OBJECTS = [
+    f'{base}{idx}' 
+    for base in CANONICAL_OBJECT_BASES 
+    for idx in OBJECT_INDICES
+]
+
 DIRECTIONS = ['left', 'straight', 'right']
 
 # Define the data sources and their specific directory casing
@@ -76,28 +82,40 @@ DATA_CONFIG = [
     {
         'source_key': 'opti', # Used as the dictionary key in the data_store
         'folder_core_path': '../data/optitrack/',
-        'object_names_map': {
-            'large': 'large',
-            'medium': 'medium',
-            'small': 'small',
-        },
+        # Map the canonical key ('large1') to the folder name ('large1')
+        'object_names_map': {obj: obj for obj in CANONICAL_OBJECTS},
         'label': 'OptiTrack'
     },
     {
         'source_key': 'rob', # Used as the dictionary key in the data_store
         'folder_core_path': '../data/youBot/',
-        'object_names_map': {
-            'large': 'large',
-            'medium': 'medium',
-            'small': 'small',
-        },
+        # Map the canonical key ('large1') to the folder name ('large1')
+        'object_names_map': {obj: obj for obj in CANONICAL_OBJECTS},
         'label': 'youBot'
     }
 ]
 
-# Initialize storage
-all_theta_values = []
-# FIX: Initialize all data entries with an empty NumPy array np.array([]). 
+# --- Color Mapping Setup ---
+cmap_base = cm.get_cmap('inferno') # Good for distinct categories
+# Normalizer scales the indices (1-4) to (0.0-1.0)
+norm_indices = Normalize(vmin=min(OBJECT_INDICES), vmax=max(OBJECT_INDICES))
+
+def get_object_color(canonical_obj_key):
+    """Retrieves a unique color based on the object's base name and index."""
+    for base in CANONICAL_OBJECT_BASES:
+        if canonical_obj_key.startswith(base):
+            # Extract the index number
+            index_str = canonical_obj_key.replace(base, '')
+            try:
+                index = int(index_str)
+                # Map the index to a color from the colormap
+                return cmap_base(norm_indices(index))
+            except ValueError:
+                return 'gray'
+    return 'black' # Default fallback
+
+
+# Initialize storage using the new canonical keys
 data_store = {
     obj: {
         d: {
@@ -120,18 +138,17 @@ for config in DATA_CONFIG:
     base_path = config['folder_core_path']
     name_map = config['object_names_map']
 
-    for canonical_obj in CANONICAL_OBJECTS:
-        # Get the actual folder name based on the source's casing convention
+    for canonical_obj in CANONICAL_OBJECTS: # Iterate over the new list ('large1', 'large2', ...)
         object_folder_name = name_map[canonical_obj]
 
         for dir_name in DIRECTIONS:
+            # The folder path is now base_path / large1 / left
             folder_path = os.path.join(base_path, object_folder_name, dir_name)
             
             if not os.path.isdir(folder_path):
-                print(f"Directory not found: {folder_path}. Skipping.")
+                # print(f"Directory not found: {folder_path}. Skipping.")
                 continue
 
-            # Keys for storing data in the unified data_store
             start_key = f'{source}_start'
             end_key = f'{source}_end'
             
@@ -145,17 +162,14 @@ for config in DATA_CONFIG:
                         
                         if source == 'opti':
                             # --- OPTITRACK DATA LOADING ---
-                            # Original OptiTrack logic: skiprows=7, headered columns
                             df = pd.read_csv(file_path, skiprows=7) 
                             
-                            # Column names for the required data components
                             col_x_plot = 'X.1'
                             col_theta_color = 'Y'
                             col_y_plot = 'Z.1'
                             
                             if df.empty: continue
                             
-                            # Check columns before access
                             if not all(col in df.columns for col in [col_x_plot, col_theta_color, col_y_plot]):
                                 raise KeyError("OptiTrack CSV missing required columns (X.1, Y, Z.1).")
 
@@ -166,55 +180,32 @@ for config in DATA_CONFIG:
                             start_point = [first_row[col_x_plot], first_row[col_theta_color], first_row[col_y_plot]]
                             end_point = [last_row[col_x_plot], last_row[col_theta_color], last_row[col_y_plot]]
                             
-                            theta_val_start = first_row[col_theta_color]
-                            theta_val_end = last_row[col_theta_color]
-                            
                         elif source == 'rob':
                             # --- YOUBOT DATA LOADING ---
-                            # User requirement: no header, no skiprows, columns are [X, Y, theta] (indices 0, 1, 2)
-                            # We map them to the expected plotting structure: [X_plot, Theta_color, Y_plot]
-                            # X (Col 0) -> X_plot
-                            # Y (Col 1) -> Y_plot
-                            # Theta (Col 2) -> Theta_color
                             df = pd.read_csv(file_path, header=None) 
                             
-                            # Check if the DataFrame has exactly 3 columns (0, 1, 2)
                             if len(df.columns) < 3:
                                 raise ValueError(f"youBot CSV expected 3 columns (X, Y, Theta) but found {len(df.columns)}.")
 
-                            # Get End Point
                             df_mean = df.mean()
 
-                            # Extract the mean values for clarity
                             mean_x = df_mean[0]
                             mean_y = df_mean[1]
                             mean_theta = df_mean[2]
                             
-                            
                             # Mapped structure: [X_plot (0), Theta_color (2), Y_plot (1)]
-                            # Note: youBot data is scaled by 100 to match OptiTrack's cm scale
-                            # youBot data provides only mean state, so we use it for both 'start' and 'end' points
+                            # youBot data is scaled by 100 
                             start_point = [mean_x*100, mean_theta, mean_y*100] 
                             end_point = start_point
                             
-                            theta_val_start = mean_theta
-                            theta_val_end = mean_theta
-                            
                         else:
-                            # Should not happen based on DATA_CONFIG
                             continue
 
-                        # Append points and theta values after successful loading and mapping
+                        # Append points
                         points_start.append(start_point)
                         points_end.append(end_point)
-                        all_theta_values.append(theta_val_start)
-                        all_theta_values.append(theta_val_end)
-
-                        # --- Add X and Y values to the global accumulator ---
                         all_xy_values.append((start_point[0], start_point[2])) # Start Point: X (index 0), Y (index 2)
                         all_xy_values.append((end_point[0], end_point[2]))   # End Point: X (index 0), Y (index 2)
-                        # --- End of Add X and Y values ---
-
 
                     except pd.errors.EmptyDataError:
                         print(f"File {filename} is empty and was skipped.")
@@ -235,108 +226,139 @@ print("--- Data Loading Complete. Preparing for Plotting. ---")
 if all_xy_values:
     all_xy_array = np.array(all_xy_values)
     
-    # Get overall min/max for X and Y coordinates
     x_min_global = np.min(all_xy_array[:, 0])
     x_max_global = np.max(all_xy_array[:, 0])
     y_min_global = np.min(all_xy_array[:, 1])
     y_max_global = np.max(all_xy_array[:, 1])
     
-    # Add a buffer/margin to the limits for better visualization
     BUFFER = 5.0 # 5 cm buffer
     X_LIM = (x_min_global - BUFFER, x_max_global + BUFFER)
     Y_LIM = (y_min_global - BUFFER, y_max_global + BUFFER)
     print(f"Global X Limits: {X_LIM}, Global Y Limits: {Y_LIM}")
 else:
-    # Set default limits if no data was loaded
     X_LIM = (-50, 50)
     Y_LIM = (-50, 50)
     print("No data found, using default plot limits.")
     
 # --- End of Global Limit Calculation ---
 
+# 3. Generate the 2D plots using the unified data_store (MODIFIED)
+print("\n--- Generating Grouped End Point 2D Quiver Plots ---")
 
-# 3. Generate the 2D plots using the unified data_store
-print("\n--- Generating Start/End Point 2D Quiver Plots (Arrows Only) ---")
+# Define base colors/alpha for OptiTrack and youBot source differentiation
+COLOR_OPTI_BASE = 0.8 # Transparency/alpha for OptiTrack
+COLOR_ROB_BASE = 1.0 # Transparency/alpha for youBot
 
-# Define colors for clarity in the legend
-COLOR_OPTI = 'darkblue'
-COLOR_ROB = 'darkred'
-
-all_start = []
-for object_name in CANONICAL_OBJECTS:
+# Iterate over the canonical object BASES (large, medium, small)
+for object_base in CANONICAL_OBJECT_BASES:
+    
+    # Iterate over the DIRECTIONS (left, straight, right)
     for dir_name in DIRECTIONS:
         
-        # --- Plot End Points (Orientation) ---
         fig_end, ax_end = plt.subplots(figsize=(10, 6))
         
-        # Access the arrays directly from the data_store
-        end_opti = data_store[object_name][dir_name]['opti_end']
-        end_rob = data_store[object_name][dir_name]['rob_end']
+        # Store handles and labels for this specific plot
+        current_handles = {}
+        
+        # Iterate over the numbered object indices (1, 2, 3, 4)
+        for index in OBJECT_INDICES:
+            
+            # Construct the full canonical object key (e.g., 'large1')
+            canonical_obj = f'{object_base}{index}'
+            
+            # Get the unique color for this object index (e.g., color for '1')
+            dynamic_color = get_object_color(canonical_obj)
+            
+            # Access the arrays directly from the data_store
+            end_opti = data_store[canonical_obj][dir_name]['opti_end']
+            end_rob = data_store[canonical_obj][dir_name]['rob_end']
 
-        mean_opti, var_opti = calculate_stats(end_opti, 'Opti_'+object_name+'/'+dir_name)
-        mean_rob, var_rob = calculate_stats(end_rob, 'Rob_'+object_name+'/'+dir_name)
+            # --- Calculate Stats ---
+            mean_opti, var_opti = calculate_stats(end_opti, f'Opti_{canonical_obj}/{dir_name}')
+            mean_rob, var_rob = calculate_stats(end_rob, f'Rob_{canonical_obj}/{dir_name}')
 
-        print('DiffMean '+object_name+'/'+dir_name+':'+str(np.linalg.norm(mean_opti-mean_rob)))
-        print('VarsOptiRob '+object_name+'/'+dir_name+':'+str(var_opti),str(var_rob))
+            print(f'DiffMean {canonical_obj}/{dir_name}: {np.linalg.norm(mean_opti-mean_rob) if not np.isnan(mean_opti[0]) else "NaN"}')
+            print(f'VarsOptiRob {canonical_obj}/{dir_name}: {var_opti} {var_rob}')
 
-        # Plot OptiTrack End Quivers
-        q3 = plot_quiver_data(ax_end, end_opti, COLOR_OPTI, 'OptiTrack')
+            # --- Plotting ---
+            
+            # 1. Plot OptiTrack End Quivers (with transparency)
+            opti_color = list(dynamic_color[:3]) + [COLOR_OPTI_BASE]
+            q3 = plot_quiver_data(ax_end, end_opti, opti_color, f'OptiTrack {canonical_obj}')
+            
+            # 2. Plot youBot (rob) End Quivers (full color)
+            rob_color = list(dynamic_color[:3]) + [COLOR_ROB_BASE]
+            q4 = plot_quiver_data(ax_end, end_rob, rob_color, f'youBot {canonical_obj}')
+            
+            # --- Legend Management ---
+            # Add handles for this specific plot.
+            key_opti = f'OptiTrack - {canonical_obj}'
+            if key_opti not in current_handles:
+                 current_handles[key_opti] = q3
+            
+            key_rob = f'youBot - {canonical_obj}'
+            if key_rob not in current_handles:
+                 current_handles[key_rob] = q4
 
-        # Plot youBot (rob) End Quivers
-        q4 = plot_quiver_data(ax_end, end_rob, COLOR_ROB, 'youBot')
 
         # Set labels, title, and aspect ratio
         ax_end.set_xlabel('X (cm)')
         ax_end.set_ylabel('Y (cm)')
-        ax_end.set_title(f'End Points of {object_name.capitalize()}/{dir_name.capitalize()}')
+        ax_end.set_title(f'End Points of {object_base.capitalize()} Objects on {dir_name.capitalize()} Trajectories')
         ax_end.set_aspect('equal')
         ax_end.grid(True, linestyle='--', alpha=0.6)
         
-        # --- APPLY UNIFORM LIMITS ---
+        # Apply uniform limits
         ax_end.set_xlim(X_LIM)
         ax_end.set_ylim(Y_LIM)
-        # --- END APPLY UNIFORM LIMITS ---
         
-        # Create a legend
-        ax_end.legend(handles=[q3, q4], 
-                        labels=['OptiTrack', 'youBot'], 
-                        loc='lower left', 
-                        )
+        # Create the legend
+        sorted_items = sorted(current_handles.items())
+        handles = [item[1] for item in sorted_items]
+        labels = [item[0] for item in sorted_items]
+
+        ax_end.legend(handles=handles, 
+                      labels=labels, 
+                      loc='lower left', 
+                      ncol=2, 
+                      fontsize='small')
         
-        plt.savefig('../figures/youbot/EndPt_'+object_name +'_'+dir_name)
+        # Save the figure using the object base name and direction name
+        plt.savefig(f'../figures/youbot/EndPt_{object_base}_{dir_name}')
         plt.close(fig_end)
 
+# --- Consolidated Start Points Plot (Kept from original) ---
+print("\n--- Generating Consolidated Start Points Plot ---")
 
-        all_start.append(data_store[object_name][dir_name]['opti_start'])
+all_start = np.concatenate(
+    [data_store[obj][dir_name]['opti_start'] 
+     for obj in CANONICAL_OBJECTS 
+     for dir_name in DIRECTIONS], 
+    axis=0
+)
 
+fig_start, ax_start = plt.subplots(figsize=(10, 8))
 
-all_start = np.concatenate(all_start, axis=0)
-# --- Plot Start Points (Orientation) ---
-fig_end, ax_end = plt.subplots(figsize=(10, 8))
+# Plot OptiTrack Start Quivers (all in one color for simplicity, as per original code)
+# Using a larger scale factor since it's a dense plot
+q = plot_quiver_data(ax_start, all_start, 'green', 'All OptiTrack Starts', scale_factor=5)
 
-# Plot OptiTrack End Quivers
-q = plot_quiver_data(ax_end, all_start, COLOR_OPTI, 'OptiTrack', scale_factor=5)
+ax_start.set_xlabel('X (cm)')
+ax_start.set_ylabel('Y (cm)')
+ax_start.set_title(f'Start Points of all Trials (OptiTrack)')
+ax_start.set_aspect('equal')
+ax_start.grid(True, linestyle='--', alpha=0.6)
 
-# Set labels, title, and aspect ratio
-ax_end.set_xlabel('X (cm)')
-ax_end.set_ylabel('Y (cm)')
-ax_end.set_title(f'Start Points of all Trials')
-ax_end.set_aspect('equal')
-ax_end.grid(True, linestyle='--', alpha=0.6)
+# Apply uniform limits (optional for start points, but often helpful)
+# ax_start.set_xlim(X_LIM)
+# ax_start.set_ylim(Y_LIM)
 
-## --- APPLY UNIFORM LIMITS ---
-#ax_end.set_xlim(X_LIM)
-#ax_end.set_ylim(Y_LIM)
-## --- END APPLY UNIFORM LIMITS ---
-
-# Create a legend
-ax_end.legend(handles=[q], 
-                labels=['OptiTrack'], 
+ax_start.legend(handles=[q], 
+                labels=['OptiTrack Start'], 
                 loc='lower left', 
                 )
 
-plt.savefig('../figures/youbot/StPt_opti')
-plt.close(fig_end)
-
+plt.savefig('../figures/youbot/StPt_opti_all')
+plt.close(fig_start)
 
 print("\n--- Plotting Complete ---")

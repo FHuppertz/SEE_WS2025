@@ -3,18 +3,7 @@
 During the execution of the 225 trials (25 repetitions per configuration), several observations were made that are relevant to the data analysis:
 
 \begin{itemize}
-    \item \textbf{Lighting Conditions:} % TODO: Did the lighting change? Did you close curtains as requested in[cite: 218]? 
-    We ensured the lab curtains were closed to maintain uniform lighting for the OptiTrack markers.
-    
-    \item \textbf{Vibration and Stability:} % TODO: Did the table shake? [cite: 221] warns about shaking affecting camera measurement.
-    We made sure not to shake the table to the maximum extent when the experiment was running. Althouhggh minor vibrations were inevitable, they were kept minimal.
-    
-    \item \textbf{Marker Placement:} % TODO: Did the markers on the blocks stay secure?
-    The markers on the objects were securely attached and checked periodically to ensure they did not shift during the trials.
-    
-    \item \textbf{Robot Behavior:} % TODO: Did the robot shudder or make noise in specific poses?
-    The robot performed smoothly in most poses, but occasional minor shudders were observed, particularly when transitioning to the Left pose.
-    
-    \item \textbf{Emergency Stops:} % TODO: Did you have to use the green button? 
-    There were no instances where the emergency stop button was required during the trials.
+    \item The OptiTrack system would be unable to detect the object, if one of the markers was blocked. We made sure that did not happend during trials.
+    \item The rosbag creation was faulty sometimes, and these trials had to be redone.
+    \item The larger the opbject, the longer it took to settle down and no longer oscillate.
 \end{itemize}
