@@ -5,6 +5,67 @@ import os
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize
 
+def calculate_stats(data_array, source_label):
+    """
+    Calculates the mean and variance for the X (index 0) and Y (index 2) components 
+    of the data array, assuming the format [X_plot, Theta_color, Y_plot].
+    
+    Returns a formatted string of the statistics.
+    """
+    if data_array.size == 0:
+        return f"   {source_label} Stats: No data available."
+
+    # X data is at index 0, Y data is at index 2
+    X = data_array[:, 0]
+    Y = data_array[:, 2]
+
+    mean_X = np.mean(X)
+    var_X = np.var(X)
+    mean_Y = np.mean(Y)
+    var_Y = np.var(Y)
+    
+    stats_str = (
+        f"   {source_label} Stats:\n"
+        f"     Mean X: {mean_X:.4f}, Variance X: {var_X:.4f}\n"
+        f"     Mean Y: {mean_Y:.4f}, Variance Y: {var_Y:.4f}"
+    )
+
+    #print(stats_str)
+    return np.array([mean_X, mean_Y]), np.array([var_X, var_Y])
+
+# --- Function to generate Quiver Plots (Arrows Only) ---
+def plot_quiver_data(ax, data_array, color, label_prefix, scale_factor=0.1):
+    """
+    Plots the given data array (X, Theta, Y) as a quiver plot (arrows only).
+    Returns the quiver object for the legend.
+    """
+    if data_array.size > 0:
+        X = data_array[:, 0]  # X position
+        Y = data_array[:, 2]  # Y position (Z.1 in OptiTrack)
+        Theta = data_array[:, 1] # Theta angle (in radians)
+
+        # Convert polar (Theta) to Cartesian (U, V) for the arrow components
+        U = np.cos(Theta)
+        V = np.sin(Theta)
+
+        # Plot the arrow (quiver)
+        # scale: controls the length of the arrows. Higher scale = shorter arrows.
+        # pivot='tail': centers the base of the arrow at (X, Y)
+        quiv = ax.quiver(X, Y, U, V, 
+                         color=color, 
+                         scale=scale_factor, 
+                         scale_units='xy', 
+                         angles='xy',
+                         width=0.005,
+                         headwidth=3,
+                         headlength=4,
+                         label=f'{label_prefix} Orientation')
+
+        return quiv
+    else:
+        # Return a dummy scatter plot for the legend entry if no data exists
+        return ax.scatter([], [], color=color, label=f'{label_prefix} Orientation')
+
 # --- Configuration ---
 # Define the canonical set of object keys (using lowercase for internal consistency)
 CANONICAL_OBJECTS = ['large', 'medium', 'small']
@@ -36,9 +97,7 @@ DATA_CONFIG = [
 
 # Initialize storage
 all_theta_values = []
-# Structure: data_store['large']['left']['opti_start'] -> np.array of points
 # FIX: Initialize all data entries with an empty NumPy array np.array([]). 
-# This ensures that even if a directory is skipped, the variable will have a .size attribute (size 0).
 data_store = {
     obj: {
         d: {
@@ -49,6 +108,9 @@ data_store = {
     }
     for obj in CANONICAL_OBJECTS
 }
+
+# New list to collect all X and Y coordinates for global min/max calculation
+all_xy_values = [] 
 
 # 1. Unified Data Loading and Global Min/Max Collection
 print("--- Starting Unified Data Loading and Pre-analysis ---")
@@ -120,16 +182,23 @@ for config in DATA_CONFIG:
                             if len(df.columns) < 3:
                                 raise ValueError(f"youBot CSV expected 3 columns (X, Y, Theta) but found {len(df.columns)}.")
 
-                            first_row = df.iloc[0]
-                            last_row = df.iloc[-1]
+                            # Get End Point
+                            df_mean = df.mean()
+
+                            # Extract the mean values for clarity
+                            mean_x = df_mean[0]
+                            mean_y = df_mean[1]
+                            mean_theta = df_mean[2]
                             
                             
                             # Mapped structure: [X_plot (0), Theta_color (2), Y_plot (1)]
-                            start_point = [first_row[0], first_row[2], first_row[1]]
-                            end_point = [last_row[0], last_row[2], last_row[1]]
+                            # Note: youBot data is scaled by 100 to match OptiTrack's cm scale
+                            # youBot data provides only mean state, so we use it for both 'start' and 'end' points
+                            start_point = [mean_x*100, mean_theta, mean_y*100] 
+                            end_point = start_point
                             
-                            theta_val_start = first_row[2]
-                            theta_val_end = last_row[2]
+                            theta_val_start = mean_theta
+                            theta_val_end = mean_theta
                             
                         else:
                             # Should not happen based on DATA_CONFIG
@@ -140,6 +209,12 @@ for config in DATA_CONFIG:
                         points_end.append(end_point)
                         all_theta_values.append(theta_val_start)
                         all_theta_values.append(theta_val_end)
+
+                        # --- Add X and Y values to the global accumulator ---
+                        all_xy_values.append((start_point[0], start_point[2])) # Start Point: X (index 0), Y (index 2)
+                        all_xy_values.append((end_point[0], end_point[2]))   # End Point: X (index 0), Y (index 2)
+                        # --- End of Add X and Y values ---
+
 
                     except pd.errors.EmptyDataError:
                         print(f"File {filename} is empty and was skipped.")
@@ -156,116 +231,112 @@ for config in DATA_CONFIG:
 
 print("--- Data Loading Complete. Preparing for Plotting. ---")
 
-# Calculate global normalization range
-if all_theta_values:
-    # Ensure min/max calculation is robust even if data is sparse
-    global_theta_min = np.min(all_theta_values)
-    global_theta_max = np.max(all_theta_values)
-    # Define the normalization object based on global min/max
-    norm = Normalize(vmin=global_theta_min, vmax=global_theta_max)
+# --- 2. Calculate Global X and Y Limits ---
+if all_xy_values:
+    all_xy_array = np.array(all_xy_values)
+    
+    # Get overall min/max for X and Y coordinates
+    x_min_global = np.min(all_xy_array[:, 0])
+    x_max_global = np.max(all_xy_array[:, 0])
+    y_min_global = np.min(all_xy_array[:, 1])
+    y_max_global = np.max(all_xy_array[:, 1])
+    
+    # Add a buffer/margin to the limits for better visualization
+    BUFFER = 5.0 # 5 cm buffer
+    X_LIM = (x_min_global - BUFFER, x_max_global + BUFFER)
+    Y_LIM = (y_min_global - BUFFER, y_max_global + BUFFER)
+    print(f"Global X Limits: {X_LIM}, Global Y Limits: {Y_LIM}")
 else:
-    # Fallback if no data was processed
-    norm = Normalize(vmin=-1, vmax=1) 
-    print("Warning: No data loaded. Using default color normalization.")
+    # Set default limits if no data was loaded
+    X_LIM = (-50, 50)
+    Y_LIM = (-50, 50)
+    print("No data found, using default plot limits.")
+    
+# --- End of Global Limit Calculation ---
 
-# Create the scalar mappable object for the color bar
-sm = ScalarMappable(norm=norm, cmap='viridis')
-sm.set_array([]) # Required for ScalarMappable
 
-# 2. Generate the 2D plots using the unified data_store
-print("\n--- Generating Start/End Point 2D Plots ---")
+# 3. Generate the 2D plots using the unified data_store
+print("\n--- Generating Start/End Point 2D Quiver Plots (Arrows Only) ---")
 
+# Define colors for clarity in the legend
+COLOR_OPTI = 'darkblue'
+COLOR_ROB = 'darkred'
+
+all_start = []
 for object_name in CANONICAL_OBJECTS:
     for dir_name in DIRECTIONS:
-        # --- Plot Start Points ---
-        fig_start, ax_start = plt.subplots(figsize=(10, 8))
         
-        # Access the arrays directly from the data_store
-        start_opti = data_store[object_name][dir_name]['opti_start']
-        start_rob = data_store[object_name][dir_name]['rob_start']
-
-        # Plot OptiTrack Start Points
-        if start_opti.size > 0:
-            sc1 = ax_start.scatter(start_opti[:, 0], start_opti[:, 2], # X is col 0, Z is col 2 (Y-axis in plot)
-                                c=start_opti[:, 1], # Y is col 1 (Color/Theta)
-                                cmap='viridis', norm=norm,
-                                marker='o', s=100, label='OptiTrack Start', alpha=0.7, edgecolors='black')
-        else:
-            sc1 = ax_start.scatter([], [], marker='o', s=100, label='OptiTrack Start')
-
-        # Plot youBot (rob) Start Points
-        if start_rob.size > 0:
-            sc2 = ax_start.scatter(start_rob[:, 0], start_rob[:, 2], # X is col 0, Z is col 2 (Y-axis in plot)
-                                c=start_rob[:, 1], # Y is col 1 (Color/Theta)
-                                cmap='viridis', norm=norm,
-                                marker='^', s=100, label='youBot Start', alpha=0.7, edgecolors='black')
-        else:
-             sc2 = ax_start.scatter([], [], marker='^', s=100, label='youBot Start')
-
-        # Add color bar
-        cbar_start = fig_start.colorbar(sm, ax=ax_start, orientation='vertical', pad=0.05)
-        cbar_start.set_label('Theta (rad)')
-        
-        # Set labels, title, and aspect ratio
-        ax_start.set_xlabel('X (cm)')
-        ax_start.set_ylabel('Y (cm)')
-        ax_start.set_title(f'Start Points Analysis: {object_name.capitalize()} / {dir_name.capitalize()}')
-        ax_start.set_aspect('equal', adjustable='box')
-        ax_start.grid(True, linestyle='--', alpha=0.6)
-        
-        # Create a legend based on marker type (source)
-        ax_start.legend(handles=[sc1, sc2], 
-                        labels=['OptiTrack', 'youBot'], 
-                        loc='lower left', 
-                        title="Source")
-        
-        plt.show()
-
-        # --- Plot End Points ---
+        # --- Plot End Points (Orientation) ---
         fig_end, ax_end = plt.subplots(figsize=(10, 8))
         
         # Access the arrays directly from the data_store
         end_opti = data_store[object_name][dir_name]['opti_end']
         end_rob = data_store[object_name][dir_name]['rob_end']
 
-        # Plot OptiTrack End Points
-        if end_opti.size > 0:
-            sc3 = ax_end.scatter(end_opti[:, 0], end_opti[:, 2],
-                                c=end_opti[:, 1], 
-                                cmap='viridis', norm=norm,
-                                marker='s', s=100, label='OptiTrack End', alpha=0.7, edgecolors='black')
-        else:
-            sc3 = ax_end.scatter([], [], marker='s', s=100, label='OptiTrack End')
+        mean_opti, var_opti = calculate_stats(end_opti, 'Opti_'+object_name+'/'+dir_name)
+        mean_rob, var_rob = calculate_stats(end_rob, 'Rob_'+object_name+'/'+dir_name)
 
+        print('DiffMean '+object_name+'/'+dir_name+':'+str(np.linalg.norm(mean_opti-mean_rob)))
+        print('VarsOptiRob '+object_name+'/'+dir_name+':'+str(var_opti),str(var_rob))
 
-        # Plot youBot (rob) End Points
-        if end_rob.size > 0:
-            sc4 = ax_end.scatter(end_rob[:, 0], end_rob[:, 2],
-                                c=end_rob[:, 1], 
-                                cmap='viridis', norm=norm,
-                                marker='X', s=100, label='youBot End', alpha=0.7, edgecolors='black')
-        else:
-            sc4 = ax_end.scatter([], [], marker='X', s=100, label='youBot End')
+        # Plot OptiTrack End Quivers
+        q3 = plot_quiver_data(ax_end, end_opti, COLOR_OPTI, 'OptiTrack')
 
-
-        # Add color bar
-        cbar_end = fig_end.colorbar(sm, ax=ax_end, orientation='vertical', pad=0.05)
-        cbar_end.set_label('Theta (rad)')
+        # Plot youBot (rob) End Quivers
+        q4 = plot_quiver_data(ax_end, end_rob, COLOR_ROB, 'youBot')
 
         # Set labels, title, and aspect ratio
         ax_end.set_xlabel('X (cm)')
         ax_end.set_ylabel('Y (cm)')
-        ax_end.set_title(f'End Points Analysis: {object_name.capitalize()} / {dir_name.capitalize()}')
-        ax_end.set_aspect('equal', adjustable='box')
+        ax_end.set_title(f'End Points of {object_name.capitalize()}/{dir_name.capitalize()}')
+        ax_end.set_aspect('equal')
         ax_end.grid(True, linestyle='--', alpha=0.6)
         
-        # Create a legend based on marker type (source)
-        ax_end.legend(handles=[sc3, sc4], 
+        # --- APPLY UNIFORM LIMITS ---
+        ax_end.set_xlim(X_LIM)
+        ax_end.set_ylim(Y_LIM)
+        # --- END APPLY UNIFORM LIMITS ---
+        
+        # Create a legend
+        ax_end.legend(handles=[q3, q4], 
                         labels=['OptiTrack', 'youBot'], 
                         loc='lower left', 
-                        title="Source")
+                        )
         
-        plt.show()
+        plt.savefig('../figures/youbot/EndPt_'+object_name +'_'+dir_name)
+        plt.close(fig_end)
+
+
+        all_start.append(data_store[object_name][dir_name]['opti_start'])
+
+
+all_start = np.concatenate(all_start, axis=0)
+# --- Plot Start Points (Orientation) ---
+fig_end, ax_end = plt.subplots(figsize=(10, 8))
+
+# Plot OptiTrack End Quivers
+q = plot_quiver_data(ax_end, all_start, COLOR_OPTI, 'OptiTrack', scale_factor=5)
+
+# Set labels, title, and aspect ratio
+ax_end.set_xlabel('X (cm)')
+ax_end.set_ylabel('Y (cm)')
+ax_end.set_title(f'Start Points of all Trials')
+ax_end.set_aspect('equal')
+ax_end.grid(True, linestyle='--', alpha=0.6)
+
+## --- APPLY UNIFORM LIMITS ---
+#ax_end.set_xlim(X_LIM)
+#ax_end.set_ylim(Y_LIM)
+## --- END APPLY UNIFORM LIMITS ---
+
+# Create a legend
+ax_end.legend(handles=[q], 
+                labels=['OptiTrack'], 
+                loc='lower left', 
+                )
+
+plt.savefig('../figures/youbot/StPt_opti')
+plt.close(fig_end)
 
 
 print("\n--- Plotting Complete ---")
