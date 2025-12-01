@@ -50,15 +50,39 @@ print("\nTranslation:\n", tvecs[0])
 # Save calibration results
 np.savez("camera_calibration_9x7.npz", mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
 
-# Optional: test undistortion on one image
-img = cv.imread(images[0])
+img = cv.imread(images[2])
 h, w = img.shape[:2]
 newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
 
 # Undistort
 dst = cv.undistort(img, mtx, dist, None, newcameramtx)
 
-cv.imshow('Original', img)
-cv.imshow('Undistorted', dst)
+def overlay_grid(image, step=50, color=(0, 0, 255), thickness=1):
+    """Overlays a red grid onto an image."""
+    img_with_grid = image.copy()
+    h, w = image.shape[:2]
+
+    # Draw vertical lines (Red color is BGR: (0, 0, 255))
+    for x in range(0, w, step):
+        cv.line(img_with_grid, (x, 0), (x, h), color, thickness)
+
+    # Draw horizontal lines
+    for y in range(0, h, step):
+        cv.line(img_with_grid, (0, y), (w, y), color, thickness)
+
+    return img_with_grid
+
+# Define grid parameters
+GRID_STEP = 50  # Distance between lines in pixels
+GRID_COLOR = (0, 0, 255) # Red in BGR
+GRID_THICKNESS = 1
+
+# Apply grid to both images
+original_with_grid = overlay_grid(img, GRID_STEP, GRID_COLOR, GRID_THICKNESS)
+undistorted_with_grid = overlay_grid(dst, GRID_STEP, GRID_COLOR, GRID_THICKNESS)
+
+# Display images with grid
+cv.imshow('Original (Distorted) with Grid', original_with_grid)
+cv.imshow('Undistorted with Grid', undistorted_with_grid)
 cv.waitKey(0)
 cv.destroyAllWindows()

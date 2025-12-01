@@ -4,7 +4,7 @@ To un-distort an image, the toolbox OpenCV calculates the following intrinsic an
 	\item Intrinsic Parameters are properties of the camera and lens assembly:
 	      \begin{itemize}
 		      \item \textbf{Camera Matrix ($\mathbf{mtx}$):} A $3 \times 3$ matrix modeling the perspective projection. It transforms 3D coordinates from the camera frame to 2D pixel coordinates.
-		      \item \textbf{Distortion Coefficients ($\mathbf{dist}$):} A vector modeling the lens distortions.
+		      \item \textbf{Distortion Coefficients ($\mathbf{dist}$):} A vector containing the lens distortions, $k_1, k_2, p_1, p_2, k_3$, where $k_i$ are the radial distortions, and $p_i$ the tangential distortions.
 	      \end{itemize}
 
 	\item Extrinsic Parameters define the pose of the camera relative to the world coordinate system:

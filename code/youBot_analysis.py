@@ -267,7 +267,7 @@ for object_name in CANONICAL_OBJECTS:
     for dir_name in DIRECTIONS:
         
         # --- Plot End Points (Orientation) ---
-        fig_end, ax_end = plt.subplots(figsize=(10, 8))
+        fig_end, ax_end = plt.subplots(figsize=(10, 6))
         
         # Access the arrays directly from the data_store
         end_opti = data_store[object_name][dir_name]['opti_end']
