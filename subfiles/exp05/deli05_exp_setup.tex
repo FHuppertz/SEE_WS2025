@@ -1,10 +1,8 @@
-\subsection{Experimental Setup}
 The experiment was conducted using a KUKA youBot (ID 3) in lab c069. The task involved pick and place operations with three different objects moved to three target poses (Straight, Left, Right). The ground truth coordinates for the opti track positions were defined as follows:
-\begin{table}[h!]
+\begin{table}[H]
     \centering
-    \caption{Ground truth object poses}
     \label{tab:object_poses}
-    \begin{tabular}{l | c | c | c}
+    \begin{tabular}{|l|c|c|c|}
         \toprule
         \textbf{Pose} & \textbf{$x(m)$} & \textbf{$y(m)$} & \textbf{$\theta(rad)$} \\
         \midrule
@@ -14,17 +12,16 @@ The experiment was conducted using a KUKA youBot (ID 3) in lab c069. The task in
         Right & $-0.064$ & $-0.352$ & $-1.13$ \\
         \bottomrule
     \end{tabular}
+    \caption{Ground truth object poses}
 \end{table}
 Motion data was captured using an OptiTrack external vision system (Motive software) and internal ROS bagfiles.
 
 And below are the ground truth end-effector poses given in the manual:
 
-\begin{table}[h!]
+\begin{table}[H]
     \centering
-    \caption{Ground truth end-effector poses}
     \label{tab:endeffector_poses}
-    \begin{tabular}{l | c | c | c}
-        \toprule
+    \begin{tabular}{|l|c|c|c|}
         \textbf{Pose} & \textbf{$x(m)$} & \textbf{$y(m)$} & \textbf{$\theta(rad)$} \\
         \midrule
         Pick & $0.152$ & $-0.457$ & $-1.65$ \\
@@ -33,4 +30,5 @@ And below are the ground truth end-effector poses given in the manual:
         Right & $-0.01$ & $-0.433$ & $-1.11$ \\
         \bottomrule
     \end{tabular}
+    \caption{Ground truth end-effector poses}
 \end{table}
