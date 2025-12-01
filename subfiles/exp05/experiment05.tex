@@ -4,21 +4,24 @@
 \usepackage{pgfplotstable}
 \usepackage{booktabs}
 \usepackage{caption}
-
+\usepackage{multirow}
 \begin{document}
 \section{Measuring the Accuracy and Precision of a KUKA youBot Arm}
-\label{sec:exp04}
+\label{sec:exp05}
 This report documents the execution of 225 experimental trials using the KUKA youBot arm to assess its accuracy and precision. We detail the experimental setup, observations regarding error sources, the data preprocessing and filtering pipeline, and a comparative visualization of internal encoder data versus external OptiTrack measurements.
 
+
+\subsection{Experiment Setup}
+\input{deli05_exp_setup.tex}
+
+\subsection{Observations and Sourcese of Error}
+\input{deli05_observations_and_sources_of_error.tex.tex}
 
 \subsection{Pose Filtering Procedure}
 \input{deli05_pose_filter.tex}
 
 \subsection{Data}
 \input{deli05_data.tex}
-
-\subsection{Observations}
-\input{deli05_observations_and_error_sources.tex}
 
 \subsection{Results}
 \input{deli05_results.tex}
