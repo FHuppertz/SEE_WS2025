@@ -1,0 +1,25 @@
+%!TEX root = ../report.tex
+\documentclass[../report.tex]{subfiles}
+
+\usepackage{pgfplotstable}
+\usepackage{booktabs}
+\usepackage{caption}
+
+\begin{document}
+\section{Measuring the Accuracy and Precision of a KUKA youBot Arm}
+\label{sec:exp04}
+This report documents the execution of 225 experimental trials using the KUKA youBot arm to assess its accuracy and precision. We detail the experimental setup, observations regarding error sources, the data preprocessing and filtering pipeline, and a comparative visualization of internal encoder data versus external OptiTrack measurements.
+
+\subsection{Observations}
+\input{deli05_observations_and_error_sources.tex}
+
+\subsection{OpenCV Camera Parameters}
+\input{deliv04_params.tex}
+
+\subsection{Experiment Observations}
+\input{deliv04_observations.tex}
+
+\subsection{Results}
+\input{deliv04_results.tex}
+
+\end{document}
