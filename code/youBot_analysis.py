@@ -220,13 +220,10 @@ print(f"--- Aggregation Complete. {total_concatenations} arrays were concatenate
 DIRECTIONS = ['left', 'straight', 'right']
 SIZES = ['large', 'medium', 'small']
 
-# Define a set of colors for the directions to ensure consistency
-# OptiTrack will use a lighter shade (alpha < 1) and youBot a darker/full shade (alpha=1)
-# We need three distinct base colors, one for each direction.
-DIRECTION_COLORS = {
-    'left': 'C0',       # Blue
-    'straight': 'C1',   # Orange
-    'right': 'C2',      # Green
+SIZE_COLORS = {
+    'large': 'C0',       # Blue
+    'medium': 'C1',   # Orange
+    'small': 'C2',      # Green
 }
 
 # Table I: Ground truth object pose (Used for Start Point - 'Pick' pose)
@@ -246,120 +243,48 @@ GT_EE = {
 }
 
 
-plt.figure(figsize=(10, 10))
-
 # --- PLOTTING DATA ---
-# (This section is kept largely the same, but marker sizes are adjusted for the dual legend)
-
+S = 150 # size of a dot
 for current_dir in DIRECTIONS:
 
-    # Aggregate data for OptiTrack and youBot for the current direction across all sizes
-    opti_data_x, opti_data_y, rob_data_x, rob_data_y = [], [], [], []
+    plt.figure(figsize=(10, 10))
+
+
     for size in SIZES:
-        try:
-            # Assuming combined_data is defined
-            opti_data = combined_data[size][current_dir]['opti_end']
-            rob_data = combined_data[size][current_dir]['rob_end']
-            if opti_data.size > 0:
-                opti_data_x.extend(opti_data[:, 0])
-                opti_data_y.extend(opti_data[:, 2])
-            if rob_data.size > 0:
-                rob_data_x.extend(rob_data[:, 0])
-                rob_data_y.extend(rob_data[:, 2])
-        except Exception:
-            pass
+        opti_data = combined_data[size][current_dir]['opti_end']
+        rob_data = combined_data[size][current_dir]['rob_end']
 
-    # Plot OptiTrack Data (Label is suppressed with '_nolegend_')
-    if opti_data_x:
-        plt.scatter(opti_data_x, opti_data_y,
-                    label='_nolegend_', # Suppress label
-                    color=DIRECTION_COLORS[current_dir],
-                    alpha=0.4,
-                    s=50,
-                    marker='s')
+        plt.scatter(opti_data[:, 0], opti_data[:, 2],
+            label=f'OptiTrack {size}',
+            color=SIZE_COLORS[size],
+            alpha=0.2,
+            s=S,
+            marker='o')
 
-    # Plot youBot Data (Label is suppressed with '_nolegend_')
-    if rob_data_x:
-        plt.scatter(rob_data_x, rob_data_y,
-                    label='_nolegend_', # Suppress label
-                    color=DIRECTION_COLORS[current_dir],
-                    alpha=1.0,
-                    s=50,
-                    marker='X')
+        plt.scatter(rob_data[:, 0], rob_data[:, 2],
+            label=f'youBot {size}',
+            color=SIZE_COLORS[size],
+            alpha=0.2,
+            s=S,
+            marker='X')
 
-    # --- Ground Truth Plotting (The two-part marker) ---
+    # --- Ground Truth Plotting ---
     # GT_OBJ
     plt.scatter(GT_OBJ[current_dir][0]*100, GT_OBJ[current_dir][1]*100,
-                label='_nolegend_', color='black', s=150, marker='*', zorder=10)
-    plt.scatter(GT_OBJ[current_dir][0]*100, GT_OBJ[current_dir][1]*100,
-                label='_nolegend_', color=DIRECTION_COLORS[current_dir], s=50, marker='.', zorder=11)
-
+                label='Ground Truth Object', color='black', s=S, marker='*', zorder=10)
     # GT_EE
     plt.scatter(GT_EE[current_dir][0]*100, GT_EE[current_dir][1]*100,
-                label='_nolegend_', color='black', s=150, marker='o', zorder=10)
-    plt.scatter(GT_EE[current_dir][0]*100, GT_EE[current_dir][1]*100,
-                label='_nolegend_', color=DIRECTION_COLORS[current_dir], s=50, marker='.', zorder=11)
+                label='Ground Truth EE', color='black', s=S, marker='s', zorder=10)
 
 
-# --- FINAL LEGEND CONSTRUCTION ---
-
-# A. Create Dummy Handles for SHAPE/SOURCE (Black markers, no color info)
-shape_handles = []
-shape_labels = []
-
-# Dummy Plot for OptiTrack (Circle)
-h_opti = plt.scatter([], [], label='OptiTrack (All Directions)', color='black', marker='s', s=50)
-shape_handles.append(h_opti)
-shape_labels.append('OptiTrack')
-
-# Dummy Plot for youBot (X)
-h_rob = plt.scatter([], [], label='youBot (All Directions)', color='black', marker='X', s=50)
-shape_handles.append(h_rob)
-shape_labels.append('youBot')
-
-# Dummy Plot for GT Obj (Star) - use black as primary color
-h_gt_obj = plt.scatter([], [], label='Ground Thruth Object', color='black', marker='*', s=150)
-shape_handles.append(h_gt_obj)
-shape_labels.append('Ground Thruth Object')
-
-# Dummy Plot for GT EE (Circle) - use black as primary color
-h_gt_ee = plt.scatter([], [], label='Ground Thruth EE', color='black', marker='o', s=150)
-shape_handles.append(h_gt_ee)
-shape_labels.append('Ground Thruth EE')
 
 
-# B. Create Dummy Handles for COLOR/DIRECTION (Solid color circles, no shape info)
-color_handles = []
-color_labels = []
-
-for direction, color in DIRECTION_COLORS.items():
-    # Dummy Plot for Direction Color
-    h_color = plt.scatter([], [], label=direction.capitalize(), color=color, marker='o', s=100)
-    color_handles.append(h_color)
-    color_labels.append(direction.capitalize())
-
-
-# C. Plotting Details and Dual Legend Placement
-plt.title('End Points Differentiated by Source/Shape and Trajectory/Color')
-plt.xlabel('X (cm)')
-plt.ylabel('Y (cm)')
-plt.grid(True, linestyle='--', alpha=0.5)
-plt.gca().set_aspect('equal', adjustable='box')
-
-# 1. Plot the Shape/Source Legend
-legend1 = plt.legend(handles=shape_handles, labels=shape_labels,
-                    loc='lower left',
-                    title='Data Source / Shape',
-                    fancybox=True)
-
-# 2. Plot the Color/Direction Legend (Placed outside the plot area)
-legend2 = plt.legend(handles=color_handles, labels=color_labels,
-                    bbox_to_anchor=(0.0, 0.15),
-                    loc='lower left',
-                    title='Trajectory / Color',
-                    fancybox=True)
-
-# Important: Manually add the first legend back to the axes
-plt.gca().add_artist(legend1)
-# 5. Save the figure
-plt.savefig('test.png')
+    # C. Plotting Details and Dual Legend Placement
+    plt.title(f'End Points {current_dir}')
+    plt.xlabel('X (cm)')
+    plt.ylabel('Y (cm)')
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.axis('equal')
+    plt.legend()
+    # 5. Save the figure
+    plt.savefig(f'../figures/youbot/{current_dir}.png')
