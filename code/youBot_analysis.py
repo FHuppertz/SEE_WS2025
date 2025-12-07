@@ -2,126 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
-from matplotlib.cm import ScalarMappable
-from matplotlib.colors import Normalize
-from matplotlib import cm # Import colormap module
 
-# --- Helper Functions ---
-
-def calculate_stats(data_array, source_label):
-    """
-    Calculates the mean and variance for the X (index 0) and Y (index 2) components
-    of the data array, assuming the format [X_plot, Theta_color, Y_plot].
-
-    Returns the mean and variance numpy arrays.
-    """
-    if data_array.size == 0:
-        # Return empty arrays for consistency when no data is available
-        return np.array([np.nan, np.nan]), np.array([np.nan, np.nan])
-
-    # X data is at index 0, Y data is at index 2
-    X = data_array[:, 0]
-    Y = data_array[:, 2]
-
-    mean_X = np.mean(X)
-    var_X = np.var(X)
-    mean_Y = np.mean(Y)
-    var_Y = np.var(Y)
-
-    return np.array([mean_X, mean_Y]), np.array([var_X, var_Y])
-
-# --- Function to generate Quiver Plots (Arrows Only) ---
-def plot_quiver_data(ax, data_array, color, label_prefix, scale_factor=0.1):
-    """
-    Plots the given data array (X, Theta, Y) as a quiver plot (arrows only).
-    Assumes X and Y data are already in cm.
-    Returns the quiver object for the legend.
-    """
-    if data_array.size > 0:
-        X = data_array[:, 0]  # X position (in cm)
-        Y = data_array[:, 2]  # Y position (in cm)
-        Theta = data_array[:, 1] # Theta angle (in radians)
-
-        # Convert polar (Theta) to Cartesian (U, V) for the arrow components
-        U = np.cos(Theta)
-        V = np.sin(Theta)
-
-        # Plot the arrow (quiver)
-        quiv = ax.quiver(X, Y, U, V,
-                         color=color,
-                         scale=scale_factor,
-                         scale_units='xy',
-                         angles='xy',
-                         width=0.005,
-                         headwidth=3,
-                         headlength=4,
-                         label=f'{label_prefix} Orientation')
-
-        return quiv
-    else:
-        # Return a dummy scatter plot for the legend entry if no data exists
-        # Use alpha=0 to prevent drawing, but retain the object for the legend
-        return ax.scatter([], [], color=color, alpha=0, label=f'{label_prefix} Orientation')
-
-# --- NEW Function to plot a single Ground Truth pose ---
-def plot_ground_truth(ax, gt_pose, label, color, scale_factor_cm, marker='s', size=5):
-    """
-    Plots a single ground truth pose as a scatter point with a quiver arrow.
-
-    gt_pose format: [x (m), y (m), theta (rad)]
-    scale_factor_cm: The desired scale factor for the quiver arrow in cm units.
-
-    The coordinates are converted from meters (m) to centimeters (cm).
-    """
-    # **Meters to Centimeters Conversion (This is the crucial step)**
-    # This *correctly* converts the ground truth table (in meters) to cm
-    x_plot = gt_pose[0] * 100
-    y_plot = gt_pose[1] * 100
-    theta = gt_pose[2]
-
-    # Calculate arrow components
-    u = np.cos(theta)
-    v = np.sin(theta)
-
-
-    # 2. Plot the quiver arrow (orientation)
-    quiv = ax.quiver(x_plot, y_plot, u, v,
-                     color=color,
-                     scale=scale_factor_cm, # Use the scale factor appropriate for cm
-                     scale_units='xy',
-                     angles='xy',
-                     width=0.005,
-                     headwidth=3,
-                     headlength=4,
-                     zorder=10,
-                     label=f'{label}')
-
-    # Return the point (scatter) handle for the legend, as it's cleaner
-    return quiv
-
-# --- Configuration ---
-
-# **NEW: Ground Truth Data from the image tables (in meters)**
-
-# Table I: Ground truth object pose (Used for Start Point - 'Pick' pose)
-GROUND_TRUTH_OBJECT_POSE = {
-    'Pick': [0.143, -0.351, -1.65],
-    'Straight': [0.150, -0.212, -1.65],
-    'Left': [0.356, -0.283, -2.08],
-    'Right': [-0.064, -0.352, -1.13]
-}
-
-# Table II: Ground truth end-effector pose (Used for End Points)
-GROUND_TRUTH_END_EFFECTOR_POSE = {
-    'Pick': [0.152, -0.457, -1.65],
-    'Straight': [0.167, -0.317, -1.62],
-    'Left': [0.331, -0.380, -2.11],
-    'Right': [-0.01, -0.433, -1.11]
-}
-
-# Define the canonical set of object *bases*
+# --- Configuration Variables ---
 CANONICAL_OBJECT_BASES = ['large', 'medium', 'small']
-# Define the object indices (1 through 4)
 OBJECT_INDICES = list(range(1, 5))
 
 # Generate the new canonical object keys (e.g., 'large1', 'large2', ...)
@@ -137,41 +20,22 @@ DIRECTIONS = ['left', 'straight', 'right']
 DATA_CONFIG = [
     {
         'source_key': 'opti', # Used as the dictionary key in the data_store
-        'folder_core_path': '../data/optitrack/',
+        'folder_core_path': '../data/optitrack/', # Adjust this relative path as needed
         # Map the canonical key ('large1') to the folder name ('large1')
         'object_names_map': {obj: obj for obj in CANONICAL_OBJECTS},
         'label': 'OptiTrack'
     },
     {
         'source_key': 'rob', # Used as the dictionary key in the data_store
-        'folder_core_path': '../data/youBot/',
+        'folder_core_path': '../data/youBot/', # Adjust this relative path as needed
         # Map the canonical key ('large1') to the folder name ('large1')
         'object_names_map': {obj: obj for obj in CANONICAL_OBJECTS},
         'label': 'youBot'
     }
 ]
 
-# --- Color Mapping Setup ---
-cmap_base = cm.get_cmap('inferno') # Good for distinct categories
-# Normalizer scales the indices (1-4) to (0.0-1.0)
-norm_indices = Normalize(vmin=min(OBJECT_INDICES), vmax=max(OBJECT_INDICES))
-
-def get_object_color(canonical_obj_key):
-    """Retrieves a unique color based on the object's base name and index."""
-    for base in CANONICAL_OBJECT_BASES:
-        if canonical_obj_key.startswith(base):
-            # Extract the index number
-            index_str = canonical_obj_key.replace(base, '')
-            try:
-                index = int(index_str)
-                # Map the index to a color from the colormap
-                return cmap_base(norm_indices(index))
-            except ValueError:
-                return 'gray'
-    return 'black' # Default fallback
-
-
 # Initialize storage using the new canonical keys
+# Structure: data_store[object_key][direction][source_point_key] = np.array([[X, Theta, Y], ...])
 data_store = {
     obj: {
         d: {
@@ -183,26 +47,22 @@ data_store = {
     for obj in CANONICAL_OBJECTS
 }
 
-# New list to collect all X and Y coordinates for global min/max calculation
-all_xy_values = []
-
-# 1. Unified Data Loading and Global Min/Max Collection
-print("--- Starting Unified Data Loading and Pre-analysis ---")
+# --- 1. Optimized CSV Reading Logic ---
+print("--- Starting Optimized CSV Reading ---")
 
 for config in DATA_CONFIG:
     source = config['source_key']
     base_path = config['folder_core_path']
     name_map = config['object_names_map']
 
-    for canonical_obj in CANONICAL_OBJECTS: # Iterate over the new list ('large1', 'large2', ...)
+    for canonical_obj in CANONICAL_OBJECTS:
         object_folder_name = name_map[canonical_obj]
 
         for dir_name in DIRECTIONS:
-            # The folder path is now base_path / large1 / left
+            # Construct the current sub-directory path: ../data/optitrack/large1/left
             folder_path = os.path.join(base_path, object_folder_name, dir_name)
 
             if not os.path.isdir(folder_path):
-                # print(f"Directory not found: {folder_path}. Skipping.")
                 continue
 
             start_key = f'{source}_start'
@@ -215,44 +75,46 @@ for config in DATA_CONFIG:
                 if filename.endswith('.csv'):
                     file_path = os.path.join(folder_path, filename)
                     try:
-
                         if source == 'opti':
                             # --- OPTITRACK DATA LOADING ---
-                            df = pd.read_csv(file_path, skiprows=7)
+                            # Only read required columns and skip header rows
+                            cols_of_interest = ['X.1', 'Y', 'Z.1']
+                            df = pd.read_csv(file_path, skiprows=7, usecols=cols_of_interest)
 
-                            col_x_plot = 'X.1'
-                            col_theta_color = 'Y'
-                            col_y_plot = 'Z.1'
+                            if df.empty:
+                                continue
 
-                            if df.empty: continue
+                            # Get the start (index 0) and end (index -1) rows ONLY (speedup)
+                            rows = df.iloc[[0, -1]]
 
-                            if not all(col in df.columns for col in [col_x_plot, col_theta_color, col_y_plot]):
-                                raise KeyError("OptiTrack CSV missing required columns (X.1, Y, Z.1).")
+                            first_row = rows.iloc[0]
+                            last_row = rows.iloc[1]
 
-                            first_row = df.iloc[0]
-                            last_row = df.iloc[-1]
-
-
-                            start_point = [first_row[col_x_plot], first_row[col_theta_color], first_row[col_y_plot]]
-                            end_point = [last_row[col_x_plot]+212.4, last_row[col_theta_color], last_row[col_y_plot]-76.17]
+                            # OptiTrack: [X_cm, Theta_rad, Y_cm]
+                            start_point = [first_row['X.1'], first_row['Y'], first_row['Z.1']]
+                            # Apply end point offset
+                            end_point = [last_row['X.1'] + 212.4, last_row['Y'], last_row['Z.1'] - 76.17]
 
                         elif source == 'rob':
                             # --- YOUBOT DATA LOADING ---
+                            # Read all rows for mean calculation
                             df = pd.read_csv(file_path, header=None)
 
                             if len(df.columns) < 3:
                                 raise ValueError(f"youBot CSV expected 3 columns (X, Y, Theta) but found {len(df.columns)}.")
 
+                            # Calculate the mean of all columns (X, Y, Theta)
                             df_mean = df.mean()
 
                             mean_x = df_mean[0]
                             mean_y = df_mean[1]
                             mean_theta = df_mean[2]
 
-                            # **FIXED: Removed *100. Assumes data in CSV is already in cm.**
-                            # Mapped structure: [X_plot (0), Theta_color (2), Y_plot (1)]
+                            # Start point: [0, 0, 0]
                             start_point = [0, 0, 0]
-                            end_point = [mean_x*100, mean_theta, mean_y*100]
+
+                            # End point: [X_cm, Theta_rad, Y_cm] (Meters * 100 to cm)
+                            end_point = [mean_x * 100, mean_theta, mean_y * 100]
 
                         else:
                             continue
@@ -261,9 +123,6 @@ for config in DATA_CONFIG:
                         points_start.append(start_point)
                         points_end.append(end_point)
 
-                        # Collect (cm) X and Y values for global limits
-                        all_xy_values.append((start_point[0], start_point[2]))
-                        all_xy_values.append((end_point[0], end_point[2]))
 
                     except pd.errors.EmptyDataError:
                         print(f"File {filename} is empty and was skipped.")
@@ -278,203 +137,194 @@ for config in DATA_CONFIG:
             data_store[canonical_obj][dir_name][start_key] = np.array(points_start)
             data_store[canonical_obj][dir_name][end_key] = np.array(points_end)
 
-print("--- Data Loading Complete. Preparing for Plotting. ---")
+print("--- Data Loading Complete ---")
+print("Format: X Theta Y")
+#print(data_store['large1']['left']['opti_end'].shape)
 
-# --- 2. Calculate Global X and Y Limits, including Ground Truth ---
-# Include Ground Truth values (converted to cm) in the limit calculation
-for pose in GROUND_TRUTH_OBJECT_POSE.values():
-    # Convert m to cm for limits calculation
-    all_xy_values.append((pose[0]*100, pose[1]*100))
-for pose in GROUND_TRUTH_END_EFFECTOR_POSE.values():
-    # Convert m to cm for limits calculation
-    all_xy_values.append((pose[0]*100, pose[1]*100))
+# Define the three primary object size categories
+COMBINED_OBJECT_BASES = ['large', 'medium', 'small']
+DIRECTIONS = ['left', 'straight', 'right']
+SOURCES = ['opti', 'rob']
+POINTS = ['start', 'end']
 
-if all_xy_values:
-    all_xy_array = np.array(all_xy_values)
+# Initialize the new data store
+# Structure: combined_data_store[size_base][direction][source_point_key] = np.array([[X, Theta, Y], ...])
+combined_data_store = {
+    size_base: {
+        d: {
+            f'{s}_{p}': []  # Initialize as a list to hold arrays for concatenation
+            for s in SOURCES
+            for p in POINTS
+        }
+        for d in DIRECTIONS
+    }
+    for size_base in COMBINED_OBJECT_BASES
+}
 
-    x_min_global = np.min(all_xy_array[:, 0])
-    x_max_global = np.max(all_xy_array[:, 0])
-    y_min_global = np.min(all_xy_array[:, 1])
-    y_max_global = np.max(all_xy_array[:, 1])
+print("--- Starting Data Aggregation by Object Size ---")
 
-    BUFFER = 5.0 # 5 cm buffer
-    X_LIM = (x_min_global - BUFFER, x_max_global + BUFFER)
-    Y_LIM = (y_min_global - BUFFER, y_max_global + BUFFER)
-    print(f"Global X Limits: {X_LIM}, Global Y Limits: {Y_LIM}")
-else:
-    X_LIM = (-50, 50)
-    Y_LIM = (-50, 50)
-    print("No data found, using default plot limits.")
+# 2. Iterate through the detailed data_store
+for canonical_obj, dir_data in data_store.items():
 
-# --- End of Global Limit Calculation ---
+    # Determine the object's base size (e.g., 'large1' -> 'large')
+    object_base_size = ''
+    for size in COMBINED_OBJECT_BASES:
+        if canonical_obj.startswith(size):
+            object_base_size = size
+            break
 
-# Define the common scale factor for quivers in the cm plots
-# This value (0.1) worked for the previous data, assuming it was 100x too large
-# Now that the data is 100x smaller, the scale factor needs to be 100x larger
-# to make the arrows the same *visual* size.
-# Let's try 100 * 0.1 = 10
-CM_QUIVER_SCALE_FACTOR = 0.1
+    if not object_base_size:
+        print(f"Warning: Could not categorize object {canonical_obj}. Skipping.")
+        continue
 
-# 3. Generate the 2D plots using the unified data_store (MODIFIED)
-print("\n--- Generating Grouped End Point 2D Quiver Plots ---")
+    # Iterate through directions ('left', 'straight', 'right')
+    for dir_name, point_data in dir_data.items():
 
-# Define base colors/alpha for OptiTrack and youBot source differentiation
-COLOR_OPTI_BASE = 0.8 # Transparency/alpha for OptiTrack
-COLOR_ROB_BASE = 1.0 # Transparency/alpha for youBot
-GT_COLOR = '#006600' # Dark Green for Ground Truth
+        # Iterate through the source/point keys (e.g., 'opti_end')
+        for key in point_data:
+            data_array = point_data[key]
 
-# Iterate over the canonical object BASES (large, medium, small)
-for object_base in CANONICAL_OBJECT_BASES:
+            # Check if the array contains data before trying to append
+            if data_array.size > 0:
+                # Append the NumPy array to the list associated with the combined category
+                combined_data_store[object_base_size][dir_name][key].append(data_array)
 
-    # Iterate over the DIRECTIONS (left, straight, right)
+
+# 3. Concatenate the lists of arrays into single NumPy arrays
+combined_data = {}
+total_concatenations = 0
+
+for size_base in COMBINED_OBJECT_BASES:
+    combined_data[size_base] = {}
+
     for dir_name in DIRECTIONS:
+        combined_data[size_base][dir_name] = {}
 
-        fig_end, ax_end = plt.subplots(figsize=(10, 5.5))
+        for key in combined_data_store[size_base][dir_name]:
+            list_of_arrays = combined_data_store[size_base][dir_name][key]
 
-        # Store handles and labels for this specific plot
-        current_handles = {}
+            if list_of_arrays:
+                # Concatenate all arrays along axis 0 (stacking rows)
+                # This combines all 'large1' through 'large4' trials into one array.
+                concatenated_array = np.concatenate(list_of_arrays, axis=0)
+                combined_data[size_base][dir_name][key] = concatenated_array
+                total_concatenations += 1
+            else:
+                # Keep an empty array if no data was found for this category
+                combined_data[size_base][dir_name][key] = np.array([])
 
-        # Plot the **Ground Truth End-Effector Pose** for the current direction
-        gt_pose_name = dir_name.capitalize()
-        if gt_pose_name in GROUND_TRUTH_OBJECT_POSE:
-            gt_pose = GROUND_TRUTH_OBJECT_POSE[gt_pose_name]
-            h_gt = plot_ground_truth(ax_end,
-                                     gt_pose,
-                                     f'Ground Truth Object',
-                                     GT_COLOR,
-                                     # Use a prominent scale for the GT arrow
-                                     scale_factor_cm=CM_QUIVER_SCALE_FACTOR,
-                                     size=5)
-            current_handles[h_gt.get_label()] = h_gt
+print(f"--- Aggregation Complete. {total_concatenations} arrays were concatenated. ---")
+#(combined_data['large']['left']['opti_end'].shape)
 
-        # Iterate over the numbered object indices (1, 2, 3, 4)
-        #
-        all_end_opti = []
-        all_end_rob = []
-        for index in OBJECT_INDICES:
+# --- Configuration ---
+DIRECTIONS = ['left', 'straight', 'right']
+SIZES = ['large', 'medium', 'small']
 
-            # Construct the full canonical object key (e.g., 'large1')
-            canonical_obj = f'{object_base}{index}'
+# Define a set of colors for the directions to ensure consistency
+# OptiTrack will use a lighter shade (alpha < 1) and youBot a darker/full shade (alpha=1)
+# We need three distinct base colors, one for each direction.
+DIRECTION_COLORS = {
+    'left': 'C0',       # Blue
+    'straight': 'C1',   # Orange
+    'right': 'C2',      # Green
+}
 
-            # Get the unique color for this object index (e.g., color for '1')
-            dynamic_color = get_object_color(canonical_obj)
+# Table I: Ground truth object pose (Used for Start Point - 'Pick' pose)
+GT_OBJ = {
+    'pick': [0.143, -0.351, -1.65],
+    'straight': [0.150, -0.212, -1.65],
+    'left': [0.356, -0.283, -2.08],
+    'right': [-0.064, -0.352, -1.13]
+}
 
-            # Access the arrays directly from the data_store
-            end_opti = data_store[canonical_obj][dir_name]['opti_end']
-            end_rob = data_store[canonical_obj][dir_name]['rob_end']
+# Table II: Ground truth end-effector pose (Used for End Points)
+GT_EE = {
+    'pick': [0.152, -0.457, -1.65],
+    'straight': [0.167, -0.317, -1.62],
+    'left': [0.331, -0.380, -2.11],
+    'right': [-0.01, -0.433, -1.11]
+}
+
+# Note: The variable 'combined_data' must be defined and loaded from the previous step.
+# Example: combined_data = final_combined_data_store
+
+plt.figure(figsize=(12, 10))
+
+# 1. Loop through Directions first
+for current_dir in DIRECTIONS:
+
+    # Initialize lists to hold ALL data points for the current direction, across ALL sizes
+    # We aggregate ALL sizes (large, medium, small) for a given source and direction.
+    opti_data_x = []
+    opti_data_y = []
+    rob_data_x = []
+    rob_data_y = []
+
+    # 2. Inner loop iterates through all sizes to collect data for the current Direction
+    for size in SIZES:
+
+        # Safely access the data array (X is index 0, Y is index 2)
+        try:
+            # Data arrays for the current size and direction
+            opti_data = combined_data[size][current_dir]['opti_end']
+            rob_data = combined_data[size][current_dir]['rob_end']
+
+            if opti_data.size > 0:
+                opti_data_x.extend(opti_data[:, 0])
+                opti_data_y.extend(opti_data[:, 2])
+
+            if rob_data.size > 0:
+                rob_data_x.extend(rob_data[:, 0])
+                rob_data_y.extend(rob_data[:, 2])
+
+        except KeyError as e:
+            print(f"Skipping missing data key for {current_dir}-{size}: {e}")
+        except Exception as e:
+            print(f"An error occurred processing {current_dir}-{size}: {e}")
+
+    # 3. Plot the aggregated data for the current direction (Plotting is inside the loop!)
+
+    # OptiTrack Data (Lighter shade/alpha)
+    if opti_data_x:
+        plt.scatter(opti_data_x, opti_data_y,
+                    label=f'OptiTrack: {current_dir.capitalize()}',
+                    color=DIRECTION_COLORS[current_dir],
+                    alpha=0.4,
+                    s=50)
+
+    # youBot Data (Darker shade/alpha)
+    if rob_data_x:
+        plt.scatter(rob_data_x, rob_data_y,
+                    label=f'youBot: {current_dir.capitalize()}',
+                    color=DIRECTION_COLORS[current_dir],
+                    alpha=1.0,
+                    s=50,
+                    marker='X') # Use a different marker for clarity
+
+    plt.scatter(GT_OBJ[current_dir][0]*100, GT_OBJ[current_dir][1]*100,
+                label=f'Ground Truth Obj: {current_dir.capitalize()}',
+                color='black',
+                alpha=1.0,
+                s=100,
+                marker='*')
+
+    plt.scatter(GT_EE[current_dir][0]*100, GT_EE[current_dir][1]*100,
+                label=f'Ground Truth EE: {current_dir.capitalize()}',
+                color='black',
+                alpha=1.0,
+                s=100,
+                marker='o')
+
+# 4. Finalize Plotting details (Called once at the end)
+plt.title('End Points Differentiated by Source and Trajectory (All Sizes)')
+plt.xlabel('X (cm)')
+plt.ylabel('Y (cm)')
+
+# Put the legend outside the plot area for better visibility
+plt.legend(title="Data Source & Trajectory")
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.gca().set_aspect('equal', adjustable='box')
 
 
-            # --- Calculate Stats ---
-            mean_opti, var_opti = calculate_stats(end_opti, f'Opti_{canonical_obj}/{dir_name}')
-            mean_rob, var_rob = calculate_stats(end_rob, f'Rob_{canonical_obj}/{dir_name}')
-
-            print(f'DiffMean {canonical_obj}/{dir_name}: {np.linalg.norm(mean_opti-mean_rob) if not np.isnan(mean_opti[0]) else "NaN"}')
-            print(f'VarsOptiRob {canonical_obj}/{dir_name}: {var_opti} {var_rob}')
-
-            # --- Plotting ---
-
-            # 1. Plot OptiTrack End Quivers (with transparency)
-            opti_color = list(dynamic_color[:3]) + [COLOR_OPTI_BASE]
-            q3 = plot_quiver_data(ax_end, end_opti, opti_color, f'OptiTrack {canonical_obj}', scale_factor=CM_QUIVER_SCALE_FACTOR)
-
-            # 2. Plot youBot (rob) End Quivers (full color)
-            rob_color = list(dynamic_color[:3]) + [COLOR_ROB_BASE]
-            q4 = plot_quiver_data(ax_end, end_rob, rob_color, f'youBot {canonical_obj}', scale_factor=CM_QUIVER_SCALE_FACTOR)
-
-            # --- Legend Management ---
-            # Add handles for this specific plot.
-            key_opti = f'OptiTrack - Group{canonical_obj[-1]}'
-            if key_opti not in current_handles:
-                 current_handles[key_opti] = q3
-
-            key_rob = f'youBot - Group{canonical_obj[-1]}'
-            if key_rob not in current_handles:
-                 current_handles[key_rob] = q4
-
-
-        # TODO CHI SQUARE:
-
-
-        # Set labels, title, and aspect ratio
-        ax_end.set_xlabel('X (cm)')
-        ax_end.set_ylabel('Y (cm)')
-        ax_end.set_title(f'End Points of {object_base.capitalize()} Objects on {dir_name.capitalize()} Trajectories')
-        ax_end.set_aspect('equal')
-        ax_end.grid(True, linestyle='--', alpha=0.6)
-
-        # Apply uniform limits
-        ax_end.set_xlim(X_LIM)
-        ax_end.set_ylim(Y_LIM)
-
-        # Create the legend
-        # Need to sort based on a common string key to group the GT handle
-        sorted_items = sorted(current_handles.items(), key=lambda item: item[0])
-        handles = [item[1] for item in sorted_items]
-        labels = [item[0] for item in sorted_items]
-
-        ax_end.legend(handles=handles,
-                      labels=labels,
-                      loc='lower left',
-                      ncol=2,
-                      fontsize='small')
-
-        # Save the figure using the object base name and direction name
-        plt.savefig(f'../figures/youbot/EndPt_{object_base}_{dir_name}')
-        plt.close(fig_end)
-
-# --- Consolidated Start Points Plot (Kept from original) ---
-print("\n--- Generating Consolidated Start Points Plot ---")
-
-all_start = np.concatenate(
-    [data_store[obj][dir_name]['opti_start']
-     for obj in CANONICAL_OBJECTS
-     for dir_name in DIRECTIONS if data_store[obj][dir_name]['opti_start'].size > 0],
-    axis=0
-)
-
-fig_start, ax_start = plt.subplots(figsize=(10, 8))
-
-# Store handles and labels for this specific plot
-current_handles_start = {}
-
-# Plot the **Ground Truth Object Pose** for 'Pick' (Start)
-if 'Pick' in GROUND_TRUTH_OBJECT_POSE:
-    gt_pose_pick = GROUND_TRUTH_OBJECT_POSE['Pick']
-    h_gt_pick = plot_ground_truth(ax_start,
-                                  gt_pose_pick,
-                                  'Ground Truth Start',
-                                  GT_COLOR,
-                                  scale_factor_cm=CM_QUIVER_SCALE_FACTOR,
-                                  size=2,
-                                  marker='*')
-    current_handles_start[h_gt_pick.get_label()] = h_gt_pick
-
-# Plot OptiTrack Start Quivers
-# Use the new, larger scale factor
-q = plot_quiver_data(ax_start, all_start, 'green', 'All OptiTrack Starts', scale_factor=CM_QUIVER_SCALE_FACTOR)
-current_handles_start[q.get_label()] = q
-
-ax_start.set_xlabel('X (cm)')
-ax_start.set_ylabel('Y (cm)')
-ax_start.set_title(f'Start Points of all Trials (OptiTrack)')
-ax_start.set_aspect('equal')
-ax_start.grid(True, linestyle='--', alpha=0.6)
-
-# Apply uniform limits
-ax_start.set_xlim(X_LIM)
-ax_start.set_ylim(Y_LIM)
-
-# Create the legend
-sorted_items_start = sorted(current_handles_start.items(), key=lambda item: item[0])
-handles_start = [item[1] for item in sorted_items_start]
-labels_start = [item[0] for item in sorted_items_start]
-
-ax_start.legend(handles=handles_start,
-                labels=labels_start,
-                loc='lower left',
-                )
-
-plt.savefig('../figures/youbot/StPt_opti_all')
-plt.close(fig_start)
-
-print("\n--- Plotting Complete ---")
+# 5. Save the figure
+plt.savefig('test.png')
