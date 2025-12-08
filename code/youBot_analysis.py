@@ -91,9 +91,9 @@ for config in DATA_CONFIG:
                             last_row = rows.iloc[1]
 
                             # OptiTrack: [X_cm, Theta_rad, Y_cm]
-                            start_point = [first_row['X.1'], first_row['Y'], first_row['Z.1']]
+                            start_point = [first_row['X.1'], first_row['Z.1'], first_row['Y']]
                             # Apply end point offset
-                            end_point = [last_row['X.1'] + 212.4, last_row['Y'], last_row['Z.1'] - 76.17]
+                            end_point = [last_row['X.1'] + 212.4, last_row['Z.1'] - 76.17, last_row['Y']]
 
                         elif source == 'rob':
                             # --- YOUBOT DATA LOADING ---
@@ -114,7 +114,7 @@ for config in DATA_CONFIG:
                             start_point = [0, 0, 0]
 
                             # End point: [X_cm, Theta_rad, Y_cm] (Meters * 100 to cm)
-                            end_point = [mean_x * 100, mean_theta, mean_y * 100]
+                            end_point = [mean_x * 100, mean_y * 100, mean_theta]
 
                         else:
                             continue
@@ -148,7 +148,7 @@ SOURCES = ['opti', 'rob']
 POINTS = ['start', 'end']
 
 # Initialize the new data store
-# Structure: combined_data_store[size_base][direction][source_point_key] = np.array([[X, Theta, Y], ...])
+# Structure: combined_data_store[size_base][direction][source_point_key]
 combined_data_store = {
     size_base: {
         d: {
@@ -214,7 +214,34 @@ for size_base in COMBINED_OBJECT_BASES:
                 combined_data[size_base][dir_name][key] = np.array([])
 
 print(f"--- Aggregation Complete. {total_concatenations} arrays were concatenated. ---")
-#(combined_data['large']['left']['opti_end'].shape)
+
+
+def remove_outliers_chebyshev(data, k=2):
+    """
+    Filters 2D/3D points. A point is removed if X OR Y is > k std devs away.
+    Expects data in format [X, Theta, Y] (based on previous logic).
+    Returns cleaned data and count of removed points.
+    """
+    if data.size == 0: return data, 0
+
+    # Extract X (col 0) and Y (col 2)
+    x = data[:, 0]
+    y = data[:, 2]
+
+    mean_x, std_x = np.mean(x), np.std(x)
+    mean_y, std_y = np.mean(y), np.std(y)
+
+    # Create mask: True if point is VALID (within k sigma)
+    mask_x = np.abs(x - mean_x) <= (k * std_x)
+    mask_y = np.abs(y - mean_y) <= (k * std_y)
+
+    # Combine masks (Must be valid in BOTH X and Y to stay)
+    final_mask = mask_x & mask_y
+
+    cleaned_data = data[final_mask]
+    removed_count = len(data) - len(cleaned_data)
+
+    return cleaned_data, removed_count
 
 # --- Configuration ---
 DIRECTIONS = ['left', 'straight', 'right']
@@ -249,19 +276,25 @@ for current_dir in DIRECTIONS:
 
     plt.figure(figsize=(10, 10))
 
-
     for size in SIZES:
         opti_data = combined_data[size][current_dir]['opti_end']
         rob_data = combined_data[size][current_dir]['rob_end']
 
-        plt.scatter(opti_data[:, 0], opti_data[:, 2],
+        opti_data, _ = remove_outliers_chebyshev(opti_data, k=2)
+        rob_data, _ = remove_outliers_chebyshev(rob_data, k=2)
+
+        opti_data, _ = remove_outliers_chebyshev(opti_data, k=2)
+        rob_data, _ = remove_outliers_chebyshev(rob_data, k=2)
+
+
+        plt.scatter(opti_data[:, 0], opti_data[:, 1],
             label=f'OptiTrack {size}',
             color=SIZE_COLORS[size],
             alpha=0.2,
             s=S,
             marker='o')
 
-        plt.scatter(rob_data[:, 0], rob_data[:, 2],
+        plt.scatter(rob_data[:, 0], rob_data[:, 1],
             label=f'youBot {size}',
             color=SIZE_COLORS[size],
             alpha=0.2,
@@ -280,7 +313,7 @@ for current_dir in DIRECTIONS:
 
 
     # C. Plotting Details and Dual Legend Placement
-    plt.title(f'End Points {current_dir}')
+    plt.title(f'End Points for {current_dir.capitalize()} Direction')
     plt.xlabel('X (cm)')
     plt.ylabel('Y (cm)')
     plt.grid(True, linestyle='--', alpha=0.5)
@@ -288,3 +321,56 @@ for current_dir in DIRECTIONS:
     plt.legend()
     # 5. Save the figure
     plt.savefig(f'../figures/youbot/{current_dir}.png')
+
+
+## Accuracy and Precision Analysis
+
+# A helper function to calculate the precision using the maximum eigenvalue
+def calculate_pca_precision(data):
+    """
+    Calculates precision based on the maximum eigenvalue of the
+    covariance matrix of the x and y coordinates (first two columns).
+    This value represents the variance along the principal component.
+    """
+    # 1. Select only the x and y coordinates (first two columns)
+    coords = data[:, 0:2]
+
+    # 2. Calculate the covariance matrix for the x and y coordinates
+    # The result is a 2x2 matrix
+    cov_matrix = np.cov(coords, rowvar=False)
+    # rowvar=False means that each column is a variable (x, y)
+
+    # 3. Calculate the eigenvalues of the covariance matrix
+    # The eigenvalues represent the variance along the principal axes
+    eigenvalues = np.linalg.eigvals(cov_matrix)
+
+    # 4. The maximum eigenvalue is a measure of the largest variance (precision)
+    max_eigenvalue = np.max(eigenvalues)
+
+    # Often, precision is represented by the standard deviation, so we
+    # take the square root of the max eigenvalue to get the principal
+    # standard deviation (sigma along the longest axis).
+    principal_std = np.sqrt(max_eigenvalue)
+
+    return principal_std
+
+# --- Your original loop, modified for PCA Precision ---
+for dir in DIRECTIONS:
+    for size in SIZES:
+        mean_opti = np.mean(combined_data[size][current_dir]['opti_end'], axis=0)
+        mean_rob = np.mean(combined_data[size][current_dir]['rob_end'], axis=0)
+
+        ground_obj = np.array(GT_OBJ[dir][0:2])*100
+        ground_rob = np.array(GT_EE[dir][0:2])*100
+
+        print(f"[ACC OPTI]{dir},{size}:", np.linalg.norm(mean_opti[0:2]-ground_obj))
+        print(f"[ACC ROB]{dir},{size}:", np.linalg.norm(mean_opti[0:2]-ground_rob))
+
+        # --- PCA Precision Calculation ---
+        prec_opti_pca = calculate_pca_precision(combined_data[size][current_dir]['opti_end'])
+        prec_rob_pca = calculate_pca_precision(combined_data[size][current_dir]['rob_end'])
+
+        # NOTE: The printout for PCA precision is a single scalar value,
+        # unlike the original which was an array [std_x, std_y].
+        print(f"[PRE OPTI PCA]{dir},{size}:", prec_opti_pca)
+        print(f"[PRE ROB PCA]{dir},{size}:", prec_rob_pca)
