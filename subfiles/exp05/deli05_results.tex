@@ -1,103 +1,25 @@
 %5. Describe the images poses used for calibration and report the found camera parameters including any error estimates (where applicable)
 %6. Sample images used for calibration
-Figure \ref{fig:large} shows the images of the plots of the large mass being moved to different end poses, which includes both OptiTrack and internal encoder measurements.
+Figures \ref{fig:left} to \ref{fig:right} depict the end points of the mass and the end effector and compares them to the given ground truth for each. These figures show that the experiment setup has a very large systematic error, leading to very low accuracy. The precision appears to be high except for the small mass. It is important to note that the orientation of the mass are not shown, due to misalignment of the object during placement back to the start position by a human. In the following sections the data is further analyized.
 
 \begin{figure}[H]
 	\centering
-	% --- First Row (2 images) ---
-	\begin{subfigure}[t]{0.48\linewidth} % Slightly smaller width for 2x2
-		\centering
-		\includegraphics[width=\linewidth]{figures/youbot/EndPt_large_right.png}
-		\caption{Right End Poses}
-	\end{subfigure}
-	\hfill % Space between the two subfigures
-	\begin{subfigure}[t]{0.48\linewidth} % Slightly smaller width for 2x2
-		\centering
-		\includegraphics[width=\linewidth]{figures/youbot/EndPt_large_left.png}
-		\caption{Left End Poses}
-	\end{subfigure}
-	% --- Add vertical space for a new row ---
-	\vspace{1em} % Adds a small vertical gap between the rows
-
-	% --- Second Row (2 images) ---
-	\begin{subfigure}[b]{0.48\linewidth} % Slightly smaller width for 2x2
-		\centering
-		\includegraphics[width=\linewidth]{figures/youbot/EndPt_large_straight.png}
-		\caption{Straight End Poses}
-	\end{subfigure}
-	\hfill % Space between the two subfigures
-	
-
-	\caption{Large Mass End Poses}
-	\label{fig:large}
+	\includegraphics[width=\linewidth]{figures/youbot/left.png}
+	\caption{Left Direction End Poses}
+	\label{fig:left}
 \end{figure}
-
-
-Figure \ref{fig:medium} shows the images of the plots of the medium mass being moved to different end poses, which includes both OptiTrack and internal encoder measurements.
-
-\begin{figure}[H]
-	\centering
-	% --- First Row (2 images) ---
-	\begin{subfigure}[t]{0.48\linewidth} % Slightly smaller width for 2x2
-		\centering
-		\includegraphics[width=\linewidth]{figures/youbot/EndPt_medium_right.png}
-		\caption{Right End Poses}
-	\end{subfigure}
-	\hfill % Space between the two subfigures
-	\begin{subfigure}[t]{0.48\linewidth} % Slightly smaller width for 2x2
-		\centering
-		\includegraphics[width=\linewidth]{figures/youbot/EndPt_medium_left.png}
-		\caption{Left End Poses}
-	\end{subfigure}
-	% --- Add vertical space for a new row ---
-	\vspace{1em} % Adds a small vertical gap between the rows
-
-	% --- Second Row (2 images) ---
-	\begin{subfigure}[b]{0.48\linewidth} % Slightly smaller width for 2x2
-		\centering
-		\includegraphics[width=\linewidth]{figures/youbot/EndPt_medium_straight.png}
-		\caption{Straigth End Poses}
-	\end{subfigure}
-	\hfill % Space between the two subfigures
-	
-
-	\caption{Medium Mass End Poses}
-	\label{fig:medium}
-\end{figure}
-
-Figure \ref{fig:small} shows the images of the plots of the small mass being moved to different end poses, which includes both OptiTrack and internal encoder measurements.
 
 
 \begin{figure}[H]
 	\centering
-	% --- First Row (2 images) ---
-	\begin{subfigure}[t]{0.48\linewidth} % Slightly smaller width for 2x2
-		\centering
-		\includegraphics[width=\linewidth]{figures/youbot/EndPt_small_right.png}
-		\caption{Right End Poses}
-	\end{subfigure}
-	\hfill % Space between the two subfigures
-	\begin{subfigure}[t]{0.48\linewidth} % Slightly smaller width for 2x2
-		\centering
-		\includegraphics[width=\linewidth]{figures/youbot/EndPt_small_left.png}
-		\caption{Left End Poses}
-	\end{subfigure}
-	% --- Add vertical space for a new row ---
-	\vspace{1em} % Adds a small vertical gap between the rows
-
-	% --- Second Row (2 images) ---
-	\begin{subfigure}[b]{0.48\linewidth} % Slightly smaller width for 2x2
-		\centering
-		\includegraphics[width=\linewidth]{figures/youbot/EndPt_small_straight.png}
-		\caption{Straight End Poses}
-	\end{subfigure}
-	\hfill % Space between the two subfigures
-	
-
-	\caption{Small Mass End Poses}
-	\label{fig:small}
+	\includegraphics[width=\linewidth]{figures/youbot/straight.png}
+	\caption{Straight Direction End Poses}
+	\label{fig:straight}
 \end{figure}
 
-
-These figures show that the experiment setup has a very large systematic error, leading to very low accuracy. The precision is much higher, and all teams data does align. The largest variance lies in the object orientation. This is due to manual rotation of the object, and not aligning it correctly each time.
-
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{figures/youbot/right.png}
+	\caption{Right Direction End Poses}
+	\label{fig:right}
+\end{figure}
