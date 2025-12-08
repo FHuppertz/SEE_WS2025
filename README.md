@@ -1,5 +1,4 @@
-# R&D Project Report Latex Template
-
+# SEE Report Group 1
 The report used the template for R&D project reports in the Autonomous Systems master's program at Hochschule Bonn-Rhein-Sieg, using the `IEEETran` class.
 
 ## Prerequisites
