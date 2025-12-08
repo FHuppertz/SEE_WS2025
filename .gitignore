@@ -305,6 +305,5 @@ TSWLatexianTemp*
 
 .zed
 .venv
-*.pdf
 
 code/__pycache__
