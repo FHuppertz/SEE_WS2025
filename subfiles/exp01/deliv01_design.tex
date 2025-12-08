@@ -1,7 +1,29 @@
 A differential drive robot is a mobile robot that moves using two independently driven wheels mounted on either side of its chassis. By varying the relative speed and direction of these wheels, the robot can move forward, backward, or rotate in place, making it highly maneuverable. This design is simple, cost-effective, and widely used in research and industry for tasks such as navigation, mapping, and control experiments.
 
+The linear and angular velocities of a differential drive robot are given by Equations \ref{eq:linear_velocity} and \ref{eq:angular_velocity}
+
+\begin{eqnarray}
+	v &=& \frac{r}{2} \left( \omega_r + \omega_l \right)
+	\label{eq:linear_velocity} \\
+	\omega &=& \frac{r}{L} \left( \omega_r - \omega_l \right),
+	\label{eq:angular_velocity}
+\end{eqnarray}
+
+where $v$ is the linear velocity, $\omega$ the angular velocity, $r$ the wheel radius,
+$L$ the distance between the wheels, and $\omega_r$, $\omega_l$ the angular velocities
+of the right and left wheels, respectively.
+
+Figure \ref{fig:robot_views_1} and Figure \ref{fig:robot_views_2} showcase various views of the robot that this team built. The construction and architecture of the robot is done in a way that the control unit comprises the middle part of the body. Since it is the most massive component of the robot, the control unit in the center, the center of gravity of the robot stays in approximately the middle of its body, which allows it to be stable. The two active wheels on both sides, along with the caster wheel, can be seen in Figure \ref{fig:robot_views_2}, specifically subfigure \ref{fig:bottom_view}.
+In order to take measurements, the main components used were a pen holder, a pen, and a so-called 'wall aligner'.
+Since the requirement of this assignment is to determine the end pose of the robot two points marked by the pens would be used to calculate the position of the robot as well as its orientation.
+The pen holder is a circular piece we found in the lego kit with a hole in the middle that became suitable for its designated purpose.
+
+In order to ensure that the robot always starts from approximately the same pose in every trial of the experiment,
+the robot has a supposedly flat, long lego piece placed at the back of the robot.
+This wall aligner works by placing the robot in such a way that the wall aligner's flat surface completely pushes against it, eliminating a degree of freedom in the start position. Then the wheels will be placed between two prior marked lines.
+
 % --- FIGURE 1: Four Subfigures ---
-\begin{figure}[ht]
+\begin{figure}[H]
 	\centering
 	\begin{subfigure}[b]{0.45\linewidth}
 		\centering
@@ -36,7 +58,9 @@ A differential drive robot is a mobile robot that moves using two independently 
 	\label{fig:robot_views_1}
 \end{figure}
 
-\begin{figure}[ht]
+\newpage
+
+\begin{figure}[H]
 	\centering
 	\begin{subfigure}[b]{0.45\linewidth}
 		\centering
@@ -64,25 +88,3 @@ A differential drive robot is a mobile robot that moves using two independently 
 	\label{fig:robot_views_2}
 	\hfill
 \end{figure}
-
-The linear and angular velocities of a differential drive robot are given by Equations \ref{eq:linear_velocity} and \ref{eq:angular_velocity}
-
-\begin{eqnarray}
-	v &=& \frac{r}{2} \left( \omega_r + \omega_l \right)
-	\label{eq:linear_velocity} \\
-	\omega &=& \frac{r}{L} \left( \omega_r - \omega_l \right),
-	\label{eq:angular_velocity}
-\end{eqnarray}
-
-where $v$ is the linear velocity, $\omega$ the angular velocity, $r$ the wheel radius,
-$L$ the distance between the wheels, and $\omega_r$, $\omega_l$ the angular velocities
-of the right and left wheels, respectively.
-
-Figure \ref{fig:robot_views_1} and Figure \ref{fig:robot_views_2} showcase various views of the robot that this team built. The construction and architecture of the robot is done in a way that the control unit comprises the middle part of the body. Since it is the most massive component of the robot, the control unit in the center, the center of gravity of the robot stays in approximately the middle of its body, which allows it to be stable. The two active wheels on both sides, along with the caster wheel, can be seen in Figure \ref{fig:robot_views_2}, specifically subfigure \ref{fig:bottom_view}.
-In order to take measurements, the main components used were a pen holder, a pen, and a so-called 'wall aligner'.
-Since the requirement of this assignment is to determine the end pose of the robot two points marked by the pens would be used to calculate the position of the robot as well as its orientation.
-The pen holder is a circular piece we found in the lego kit with a hole in the middle that became suitable for its designated purpose.
-
-In order to ensure that the robot always starts from approximately the same pose in every trial of the experiment,
-the robot has a supposedly flat, long lego piece placed at the back of the robot.
-This wall aligner works by placing the robot in such a way that the wall aligner's flat surface completely pushes against it, eliminating a degree of freedom in the start position. Then the wheels will be placed between two prior marked lines.
