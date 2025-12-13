@@ -364,7 +364,7 @@ for dir in DIRECTIONS:
         ground_rob = np.array(GT_EE[dir][0:2])*100
 
         print(f"[ACC OPTI]{dir},{size}:", np.linalg.norm(mean_opti[0:2]-ground_obj))
-        print(f"[ACC ROB]{dir},{size}:", np.linalg.norm(mean_opti[0:2]-ground_rob))
+        print(f"[ACC ROB]{dir},{size}:", np.linalg.norm(mean_rob[0:2]-ground_rob))
 
         # --- PCA Precision Calculation ---
         prec_opti_pca = calculate_pca_precision(combined_data[size][current_dir]['opti_end'])
