@@ -351,23 +351,17 @@ def calculate_pca_precision(data):
 
     return principal_std
 
-# --- Your original loop, which remains the same outside the function ---
-# Assuming DIRECTIONS, SIZES, combined_data, GT_OBJ, GT_EE, and current_dir are defined elsewhere
 
-# --- Your original loop, modified for PCA Precision ---
 for dir in DIRECTIONS:
     for size in SIZES:
-        # Assuming mean calculation and ground truth variables are correctly defined here
-        # (The snippet below is illustrative and assumes the rest of your environment is set up)
+        mean_opti = np.mean(combined_data[size][dir]['opti_end'], axis=0)
+        mean_rob = np.mean(combined_data[size][dir]['rob_end'], axis=0)
 
-        # mean_opti = np.mean(combined_data[size][current_dir]['opti_end'], axis=0)
-        # mean_rob = np.mean(combined_data[size][current_dir]['rob_end'], axis=0)
+        ground_obj = np.array(GT_OBJ[dir][0:2])*100
+        ground_rob = np.array(GT_EE[dir][0:2])*100
 
-        # ground_obj = np.array(GT_OBJ[dir][0:2])*100
-        # ground_rob = np.array(GT_EE[dir][0:2])*100
-
-        # print(f"[ACC OPTI]{dir},{size}:", np.linalg.norm(mean_opti[0:2]-ground_obj))
-        # print(f"[ACC ROB]{dir},{size}:", np.linalg.norm(mean_rob[0:2]-ground_rob))
+        print(f"[ACC OPTI]{dir},{size}:", np.linalg.norm(mean_opti[0:2]-ground_obj))
+        print(f"[ACC ROB]{dir},{size}:", np.linalg.norm(mean_rob[0:2]-ground_rob))
 
         # --- PCA Precision Calculation ---
         prec_opti_pca = calculate_pca_precision(combined_data[size][dir]['opti_end'])
@@ -375,5 +369,5 @@ for dir in DIRECTIONS:
 
         # NOTE: The printout for PCA precision is a single scalar value,
         # representing the standard deviation along the longest axis.
-        # print(f"[PRE OPTI PCA]{dir},{size}:", prec_opti_pca)
-        # print(f"[PRE ROB PCA]{dir},{size}:", prec_rob_pca)
+        print(f"[PRE OPTI PCA]{dir},{size}:", prec_opti_pca)
+        print(f"[PRE ROB PCA]{dir},{size}:", prec_rob_pca)

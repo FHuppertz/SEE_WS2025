@@ -1,12 +1,7 @@
-%- accuracy of the arm
-%- does the distribution of the object follow gaussian distribution?
-%- how change in shape and mass affect the accuracy and precision, is it statistically significant?
-%- how much the change of the placing pose (L - R - S) affect the accuracy and precision, is it statistically significant?
-%- which of the above mentioned factors(change in object vs change in placing pose) has the most significant effect on the accuracy and precision?
-
-To determine the accuracy and precision of the youBot robot arm, the gathered data was further analyzed. To find the accuracy, the mean of the point clouds for each direction and object was compared with its respective ground truth. For precision, a Principal Component Analysis (PCA) was conducted (using only the X and Y coordinates of the data), and the largest standard deviation was used to describe the worst-case precision. The results of this analysis are depicted in Tables \ref{tab:acc_prec_opti} and \ref{tab:acc_prec_rob}.
-
-These tables reveal that performance is significantly influenced by the chosen pose. Regarding accuracy, both the OptiTrack system and the youBot Arm show that the left direction yields the worst results (highest distance to ground truth), while the right and straight directions exhibit the highest accuracy. Additionally, across all directions, the larger the object, the higher the accuracy (though only marginally). For precision, the OptiTrack system shows that the small object has the worst precision, whereas for the youBot Arm, the large object has the worst precision. The medium object exhibits the highest precision for both systems, and this precision is unaffected by the direction of the placement.
+To find the accuracy, the mean of the point clouds for each direction and object was compared with its respective ground truth. For precision, a Principal Component Analysis (PCA) was conducted (using only the X and Y coordinates of the data), and the largest standard deviation was used to describe the (worst-case) precision.
+The results of this analysis are depicted in Tables \ref{tab:acc_prec_opti} and \ref{tab:acc_prec_rob}. These tables reveal that accuracy and precision is primarily influenced by the direction of motion, while object size mainly impacts precision.
+Regarding accuracy, both the OptiTrack system and the youBot Arm show that the left direction is generally the least accurate. For the OptiTrack system, the straight direction exhibits the highest accuracy, while for the youBot Arm, the right direction provides the highest accuracy. Additionally, for the OptiTrack system, the large object size is generally more accurate, whereas object size has a minimal effect on the youBot Arm's accuracy.
+For precision, the OptiTrack system shows that the large object generally has the highest precision, while the small object is the least precise (except in the right direction). For the youBot Arm, the medium object generally has the highest precision, and the large object has the lowest precision (except in the straight direction).
 
 \begin{table}[H]
 	\centering
@@ -14,40 +9,41 @@ These tables reveal that performance is significantly influenced by the chosen p
 		\hline
 		\textbf{Direction}        & \textbf{Object} & \textbf{Accuracy (cm)} & \textbf{Precision (cm)} \\
 		\hline
-		\multirow{3}{*}{Left}     & Small           & 73.122            & 1.193              \\
-		                          & Medium          & 69.719            & 0.324              \\
-		                          & Large           & 69.666            & 0.410              \\
+		\multirow{3}{*}{Left}     & Small           & 50.179                 & 1.234                   \\
+		                          & Medium          & 46.860                 & 1.321                   \\
+		                          & Large           & 47.320                 & 0.340                   \\
 		\hline
-		\multirow{3}{*}{Right}    & Small           & 49.978            & 1.193              \\
-		                          & Medium          & 47.545            & 0.324              \\
-		                          & Large           & 47.367            & 0.410              \\
+		\multirow{3}{*}{Right}    & Small           & 49.978                 & 1.193                   \\
+		                          & Medium          & 47.545                 & 0.324                   \\
+		                          & Large           & 47.367                 & 0.410                   \\
 		\hline
-		\multirow{3}{*}{Straight} & Small           & 52.143            & 1.193              \\
-		                          & Medium          & 48.815            & 0.324              \\
-		                          & Large           & 48.738            & 0.410              \\
+		\multirow{3}{*}{Straight} & Small           & 49.246                 & 1.248                   \\
+		                          & Medium          & 45.859                 & 0.433                   \\
+		                          & Large           & 45.975                 & 0.431                   \\
 		\hline
 	\end{tabular}
 	\caption{Accuracy (Distance of Ground Truth) and Precision (Largest Standard Deviation) Data for the OptiTrack System}
 	\label{tab:acc_prec_opti}
 \end{table}
 
+
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|c|c|c|c|}
 		\hline
 		\textbf{Direction}        & \textbf{Object} & \textbf{Accuracy (cm)} & \textbf{Precision (cm)} \\
 		\hline
-		\multirow{3}{*}{Left}     & Small           & 76.769            & 1.489              \\
-		                          & Medium          & 73.467            & 0.997              \\
-		                          & Large           & 73.384            & 1.701              \\
+		\multirow{3}{*}{Left}     & Small           & 5.801                  & 1.317                   \\
+		                          & Medium          & 5.589                  & 0.518                   \\
+		                          & Large           & 5.633                  & 0.532                   \\
 		\hline
-		\multirow{3}{*}{Right}    & Small           & 59.583            & 1.489              \\
-		                          & Medium          & 57.069            & 0.997              \\
-		                          & Large           & 56.896            & 1.701              \\
+		\multirow{3}{*}{Right}    & Small           & 1.953                  & 1.489                   \\
+		                          & Medium          & 2.060                  & 0.997                   \\
+		                          & Large           & 1.940                  & 1.701                   \\
 		\hline
-		\multirow{3}{*}{Straight} & Small           & 60.343            & 1.489              \\
-		                          & Medium          & 57.153            & 0.997              \\
-		                          & Large           & 57.049            & 1.701              \\
+		\multirow{3}{*}{Straight} & Small           & 3.165                  & 1.252                   \\
+		                          & Medium          & 3.168                  & 1.029                   \\
+		                          & Large           & 3.151                  & 1.124                   \\
 		\hline
 	\end{tabular}
 	\caption{Accuracy (Distance to Ground Truth) and Precision (Largest Standard Deviation) Data for the youBot Robot Arm}
