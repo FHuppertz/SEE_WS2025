@@ -90,7 +90,24 @@ def chi_square_gaussian_test(data, col_name, num_bins=10, direction='Left', alph
     pdf = norm.pdf(x, mu, std)
     plt.plot(x, pdf, 'r-', linewidth=2, label='Fitted Gaussian PDF')
     plt.title(f'Gaussian Fit & χ² Test for {direction} ({col_name}-Axis)\nH₀: Data is Gaussian → {result_str}')
-    plt.xlabel(col_name)
+
+
+    x_label_val = ""
+
+    if col_name == "Theta":
+
+        x_label_val = "Theta (rad)"
+
+    elif col_name == "X":
+
+        x_label_val = "X (cm)"
+
+    else:
+
+        x_label_val = "Y (cm)"
+
+
+    plt.xlabel(x_label_val)
     plt.ylabel('Density')
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.6)

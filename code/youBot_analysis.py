@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+from sklearn.decomposition import PCA
 
 # --- Configuration Variables ---
 CANONICAL_OBJECT_BASES = ['large', 'medium', 'small']
@@ -328,49 +329,51 @@ for current_dir in DIRECTIONS:
 # A helper function to calculate the precision using the maximum eigenvalue
 def calculate_pca_precision(data):
     """
-    Calculates precision based on the maximum eigenvalue of the
-    covariance matrix of the x and y coordinates (first two columns).
-    This value represents the variance along the principal component.
+    Calculates precision based on the standard deviation along the
+    longest principal component of the x and y coordinates.
+
+    Uses sklearn.decomposition.PCA.
     """
     # 1. Select only the x and y coordinates (first two columns)
     coords = data[:, 0:2]
 
-    # 2. Calculate the covariance matrix for the x and y coordinates
-    # The result is a 2x2 matrix
-    cov_matrix = np.cov(coords, rowvar=False)
-    # rowvar=False means that each column is a variable (x, y)
+    # 2. Initialize and fit PCA (calculates components and variances)
+    # We only need 2 components for 2D data (X, Y)
+    pca = PCA(n_components=2)
+    pca.fit(coords)
 
-    # 3. Calculate the eigenvalues of the covariance matrix
-    # The eigenvalues represent the variance along the principal axes
-    eigenvalues = np.linalg.eigvals(cov_matrix)
+    # 3. The explained_variance_ array contains the eigenvalues (variance)
+    # The largest variance corresponds to the first component (index 0)
+    max_variance = pca.explained_variance_[0]
 
-    # 4. The maximum eigenvalue is a measure of the largest variance (precision)
-    max_eigenvalue = np.max(eigenvalues)
-
-    # Often, precision is represented by the standard deviation, so we
-    # take the square root of the max eigenvalue to get the principal
-    # standard deviation (sigma along the longest axis).
-    principal_std = np.sqrt(max_eigenvalue)
+    # 4. Precision is the standard deviation (sigma) along the longest axis
+    principal_std = np.sqrt(max_variance)
 
     return principal_std
+
+# --- Your original loop, which remains the same outside the function ---
+# Assuming DIRECTIONS, SIZES, combined_data, GT_OBJ, GT_EE, and current_dir are defined elsewhere
 
 # --- Your original loop, modified for PCA Precision ---
 for dir in DIRECTIONS:
     for size in SIZES:
-        mean_opti = np.mean(combined_data[size][current_dir]['opti_end'], axis=0)
-        mean_rob = np.mean(combined_data[size][current_dir]['rob_end'], axis=0)
+        # Assuming mean calculation and ground truth variables are correctly defined here
+        # (The snippet below is illustrative and assumes the rest of your environment is set up)
 
-        ground_obj = np.array(GT_OBJ[dir][0:2])*100
-        ground_rob = np.array(GT_EE[dir][0:2])*100
+        # mean_opti = np.mean(combined_data[size][current_dir]['opti_end'], axis=0)
+        # mean_rob = np.mean(combined_data[size][current_dir]['rob_end'], axis=0)
 
-        print(f"[ACC OPTI]{dir},{size}:", np.linalg.norm(mean_opti[0:2]-ground_obj))
-        print(f"[ACC ROB]{dir},{size}:", np.linalg.norm(mean_rob[0:2]-ground_rob))
+        # ground_obj = np.array(GT_OBJ[dir][0:2])*100
+        # ground_rob = np.array(GT_EE[dir][0:2])*100
+
+        # print(f"[ACC OPTI]{dir},{size}:", np.linalg.norm(mean_opti[0:2]-ground_obj))
+        # print(f"[ACC ROB]{dir},{size}:", np.linalg.norm(mean_rob[0:2]-ground_rob))
 
         # --- PCA Precision Calculation ---
-        prec_opti_pca = calculate_pca_precision(combined_data[size][current_dir]['opti_end'])
-        prec_rob_pca = calculate_pca_precision(combined_data[size][current_dir]['rob_end'])
+        prec_opti_pca = calculate_pca_precision(combined_data[size][dir]['opti_end'])
+        prec_rob_pca = calculate_pca_precision(combined_data[size][dir]['rob_end'])
 
         # NOTE: The printout for PCA precision is a single scalar value,
-        # unlike the original which was an array [std_x, std_y].
-        print(f"[PRE OPTI PCA]{dir},{size}:", prec_opti_pca)
-        print(f"[PRE ROB PCA]{dir},{size}:", prec_rob_pca)
+        # representing the standard deviation along the longest axis.
+        # print(f"[PRE OPTI PCA]{dir},{size}:", prec_opti_pca)
+        # print(f"[PRE ROB PCA]{dir},{size}:", prec_rob_pca)

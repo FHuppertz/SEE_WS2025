@@ -4,14 +4,15 @@
 %- how much the change of the placing pose (L - R - S) affect the accuracy and precision, is it statistically significant?
 %- which of the above mentioned factors(change in object vs change in placing pose) has the most significant effect on the accuracy and precision?
 
-To determine the accuracy and precision of the youBot robot arm, the gathered data was further analyzed. To find the accuracy, the mean of the point clouds for each direction and object was compared with its respective ground truth. For precision, a Principal Component Analysis (PCA) was conducted (using only the X and Y coordinates of the data), and the largest standard deviation was used to describe the worst-case precision. The results of this analysis are depicted in Tables \ref{tab:acc_prec_opti} and \ref{tab:acc_prec_rob}. These tables show that, regarding accuracy, the larger the object, the higher the accuracy (though only marginally). For precision, the OptiTrack system shows that the small object has the worst precision, whereas for the youBot Arm, the large object has the worst precision. The medium object exhibits the highest precision for both systems.
+To determine the accuracy and precision of the youBot robot arm, the gathered data was further analyzed. To find the accuracy, the mean of the point clouds for each direction and object was compared with its respective ground truth. For precision, a Principal Component Analysis (PCA) was conducted (using only the X and Y coordinates of the data), and the largest standard deviation was used to describe the worst-case precision. The results of this analysis are depicted in Tables \ref{tab:acc_prec_opti} and \ref{tab:acc_prec_rob}.
 
+These tables reveal that performance is significantly influenced by the chosen pose. Regarding accuracy, both the OptiTrack system and the youBot Arm show that the left direction yields the worst results (highest distance to ground truth), while the right and straight directions exhibit the highest accuracy. Additionally, across all directions, the larger the object, the higher the accuracy (though only marginally). For precision, the OptiTrack system shows that the small object has the worst precision, whereas for the youBot Arm, the large object has the worst precision. The medium object exhibits the highest precision for both systems, and this precision is unaffected by the direction of the placement.
 
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|c|c|c|c|}
 		\hline
-		\textbf{Direction}        & \textbf{Object} & \textbf{Accuracy} & \textbf{Precision} \\
+		\textbf{Direction}        & \textbf{Object} & \textbf{Accuracy (cm)} & \textbf{Precision (cm)} \\
 		\hline
 		\multirow{3}{*}{Left}     & Small           & 73.122            & 1.193              \\
 		                          & Medium          & 69.719            & 0.324              \\
@@ -34,7 +35,7 @@ To determine the accuracy and precision of the youBot robot arm, the gathered da
 	\centering
 	\begin{tabular}{|c|c|c|c|}
 		\hline
-		\textbf{Direction}        & \textbf{Object} & \textbf{Accuracy} & \textbf{Precision} \\
+		\textbf{Direction}        & \textbf{Object} & \textbf{Accuracy (cm)} & \textbf{Precision (cm)} \\
 		\hline
 		\multirow{3}{*}{Left}     & Small           & 76.769            & 1.489              \\
 		                          & Medium          & 73.467            & 0.997              \\

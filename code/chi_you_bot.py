@@ -174,7 +174,8 @@ def check_chi_squared_and_plot(data_points, axis_name, size, direction, source_l
     plt.title(f'{source_label} | {size} - {direction} ({axis_name})\n{sig} (p={p_val:.3f})')
     plt.legend()
     plt.grid(alpha=0.3)
-    
+    plt.xlabel("X (cm)")
+    plt.ylabel("Y (cm)")
     filename = f"{source_label}_{size}_{direction}_{axis_name}.png"
     plt.savefig(os.path.join(output_dir, filename))
     plt.close()
